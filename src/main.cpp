@@ -71,23 +71,69 @@ int main()
         // TODO 1.2
         // Аналогично тому, как был запрошен список идентификаторов всех платформ - так и с названием платформы, теперь, когда известна длина названия - его можно запросить:
         std::vector<unsigned char> platformName(platformNameSize, 0);
-        // clGetPlatformInfo(...);
+        OCL_SAFE_CALL(clGetPlatformInfo(platforms[platformIndex], CL_PLATFORM_NAME, platformNameSize, platformName.data(), nullptr));
         std::cout << "    Platform name: " << platformName.data() << std::endl;
 
         // TODO 1.3
         // Запросите и напечатайте так же в консоль вендора данной платформы
+        std::size_t platformVendorSize = 0;
+        OCL_SAFE_CALL(clGetPlatformInfo(platforms[platformIndex], CL_PLATFORM_VENDOR, 0, nullptr, &platformVendorSize));
+
+        std::vector<unsigned char> platformVendor(platformVendorSize, 0);
+        OCL_SAFE_CALL(clGetPlatformInfo(platforms[platformIndex], CL_PLATFORM_VENDOR, platformVendorSize, platformVendor.data(), nullptr));
+        std::cout << "    Vendor name: " << platformName.data() << std::endl;
+
 
         // TODO 2.1
         // Запросите число доступных устройств данной платформы (аналогично тому, как это было сделано для запроса числа доступных платформ - см. секцию "OpenCL Runtime" -> "Query Devices")
         cl_uint devicesCount = 0;
+        std::vector<cl_device_id> deviceIDs;
+        try {
+            OCL_SAFE_CALL(clGetDeviceIDs(platforms[platformIndex], CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        } catch (std::runtime_error) {
+            std::cerr << "    Could not find any devices for this platform" << std::endl;
+        }
+        if (devicesCount) {
+            std::cout << "\nDevice count:\n\t" << devicesCount << std::endl;
+            deviceIDs.resize(devicesCount);
+            OCL_SAFE_CALL(clGetDeviceIDs(platforms[platformIndex], CL_DEVICE_TYPE_ALL, devicesCount, deviceIDs.data(), nullptr));
+
+            std::cout << "Devices:\n"; 
+        }
 
         for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
             // TODO 2.2
             // Запросите и напечатайте в консоль:
+            
             // - Название устройства
+            std::size_t deviceNameSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_NAME, 0, nullptr, &deviceNameSize));
+
+            std::vector<char> deviceName(deviceNameSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_NAME, deviceNameSize, deviceName.data(), nullptr));
+            std::cout << "\tDevice name: " << deviceName.data() << std::endl;
+            
             // - Тип устройства (видеокарта/процессор/что-то странное)
+            cl_device_type deviceType {};
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_TYPE, sizeof(cl_device_type), &deviceType, nullptr));
+            std::cout << "\tDevice type: " << deviceType << std::endl;
+            
             // - Размер памяти устройства в мегабайтах
+            cl_ulong deviceMemory {};
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &deviceMemory, nullptr));
+            std::cout << "\tDevice memory: " << static_cast<double>(deviceMemory) / (1024 * 1024) << " MB" << std::endl;
+
             // - Еще пару или более свойств устройства, которые вам покажутся наиболее интересными
+            cl_uint deviceClock {};
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &deviceClock, nullptr));
+            std::cout << "\tDevice clock: " << deviceClock << " MHz" << std::endl;
+
+            cl_bool deviceEndiannes {};
+            OCL_SAFE_CALL(clGetDeviceInfo(deviceIDs[deviceIndex], CL_DEVICE_ENDIAN_LITTLE, sizeof(cl_bool), &deviceEndiannes, nullptr));
+            std::cout << "\tDevice endiannes is little: " << std::boolalpha << static_cast<bool>(deviceEndiannes) << std::endl;
+
+            std::size_t field_size = 0;
+
         }
     }
 
