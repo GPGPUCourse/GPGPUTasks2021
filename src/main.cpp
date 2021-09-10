@@ -76,8 +76,10 @@ int main()
 
         // TODO 1.3
         // Запросите и напечатайте так же в консоль вендора данной платформы
-        std::vector<unsigned char> platformVendor(platformNameSize, 0);
-        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, platformNameSize, platformName.data(), nullptr));
+        size_t vendorSize = 0;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, 0, nullptr, &vendorSize));
+        std::vector<unsigned char> platformVendor(vendorSize, 0);
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, vendorSize, platformName.data(), nullptr));
         std::cout << "    Vendor name: " << platformName.data() << std::endl;
 
         // TODO 2.1
