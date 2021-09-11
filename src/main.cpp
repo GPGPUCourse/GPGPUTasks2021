@@ -30,14 +30,14 @@ void reportError(cl_int err, const std::string &filename, int line)
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
-unsigned char * getDeviceStrProperty(cl_device_id device, cl_device_info property)
+std::vector<unsigned char> getDeviceStrProperty(cl_device_id device, cl_device_info property)
 {
     size_t devicePropertySize = 0;
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, 0, nullptr, &devicePropertySize));
     std::vector<unsigned char> deviceProperty(devicePropertySize, 0);
 
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, deviceProperty.data(), nullptr));
-    return deviceProperty.data();
+    return deviceProperty;
 }
 
 const char* getDeviceType(cl_device_id device)
@@ -137,10 +137,10 @@ int main()
             cl_device_id device = devices[deviceIndex];
             // TODO 2.2
 
-            std::cout << "Device name: " << getDeviceStrProperty(device, CL_DEVICE_NAME) << std::endl;
+            std::cout << "Device name: " << getDeviceStrProperty(device, CL_DEVICE_NAME).data() << std::endl;
             std::cout << "Device type: " << getDeviceType(device) << std::endl;
             std::cout << "Device max memory allocation: " << getDeviceProperty<cl_ulong>(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE) << std::endl;
-            std::cout << "Device driver version: " << getDeviceStrProperty(device, CL_DRIVER_VERSION) << std::endl;
+            std::cout << "Device driver version: " << getDeviceStrProperty(device, CL_DRIVER_VERSION).data() << std::endl;
             std::cout << "Device have image support: " << (getDeviceProperty<bool>(device, CL_DEVICE_IMAGE_SUPPORT) ? "true":"false") << std::endl;
             std::cout << "Device max parameter size: " << getDeviceProperty<cl_ulong>(device, CL_DEVICE_MAX_PARAMETER_SIZE) << std::endl;
 
