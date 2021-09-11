@@ -30,13 +30,13 @@ void reportError(cl_int err, const std::string &filename, int line)
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
-char * getDeviceStrProperty(cl_device_id device, int property)
+unsigned char * getDeviceStrProperty(cl_device_id device, cl_device_info property)
 {
     size_t devicePropertySize = 0;
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, 0, nullptr, &devicePropertySize));
-    std::vector<char> deviceProperty(devicePropertySize, 0);
+    std::vector<unsigned char> deviceProperty(devicePropertySize, 0);
 
-    OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, deviceProperty.data(), NULL));
+    OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, deviceProperty.data(), nullptr));
     return deviceProperty.data();
 }
 
@@ -68,7 +68,7 @@ T getDeviceProperty(cl_device_id device, int property)
     OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 0, nullptr, &devicePropertySize));
     T deviceProperty;
 
-    OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, &deviceProperty, NULL));
+    OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, &deviceProperty, nullptr));
     return deviceProperty;
 }
 
@@ -121,7 +121,7 @@ int main()
         size_t platformVendorSize = 0;
         OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, 0, nullptr, &platformVendorSize));
         std::vector<unsigned char> platformVendor(platformVendorSize, 0);
-        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, platformVendorSize, platformVendor.data(), NULL));
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, platformVendorSize, platformVendor.data(), nullptr));
         std::cout << "    Platform vendor: " << platformVendor.data() << std::endl;
         // TODO 2.1
         // Запросите число доступных устройств данной платформы (аналогично тому, как это было сделано для запроса числа доступных платформ - см. секцию "OpenCL Runtime" -> "Query Devices")
