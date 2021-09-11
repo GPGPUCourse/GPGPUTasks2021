@@ -30,11 +30,11 @@ void reportError(cl_int err, const std::string &filename, int line)
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
-unsigned char * getDeviceStrProperty(cl_device_id device, int property)
+char * getDeviceStrProperty(cl_device_id device, int property)
 {
     size_t devicePropertySize = 0;
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, 0, nullptr, &devicePropertySize));
-    std::vector<unsigned char> deviceProperty(devicePropertySize, 0);
+    std::vector<char> deviceProperty(devicePropertySize, 0);
 
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, deviceProperty.data(), NULL));
     return deviceProperty.data();
