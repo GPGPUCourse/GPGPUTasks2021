@@ -153,7 +153,7 @@ int main()
                                     &retSize));
 
             std::cout << "MAX 3D HEIGHT, WIDTH and DEPTH: " << "H: " << max_3d_HEIGHT
-                      << ", W: " << max_2d_WIDTH << ", D: " << max_3d_DEPTH << std::endl;
+                      << ", W: " << max_3d_WIDTH << ", D: " << max_3d_DEPTH << std::endl;
         }
     }
 
