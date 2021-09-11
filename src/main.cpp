@@ -136,11 +136,7 @@ int main()
             std::cout << "Device #" << (deviceIndex + 1) << "/" << devicesCount << std::endl;
             cl_device_id device = devices[deviceIndex];
             // TODO 2.2
-            // Запросите и напечатайте в консоль:
-            // - Название устройства
-            // - Тип устройства (видеокарта/процессор/что-то странное)
-            // - Размер памяти устройства в мегабайтах
-            // - Еще пару или более свойств устройства, которые вам покажутся наиболее интересными
+
             std::cout << "Device name: " << getDeviceStrProperty(device, CL_DEVICE_NAME, "name") << std::endl;
             std::cout << "Device type: " << getDeviceType(device) << std::endl;
             std::cout << "Device max memory allocation: " << getDeviceProperty<cl_ulong>(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE) << std::endl;
