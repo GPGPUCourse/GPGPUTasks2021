@@ -117,11 +117,11 @@ int main()
 
             cl_ulong deviceGlobalMemSize = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(deviceGlobalMemSize), &deviceGlobalMemSize, nullptr));
-            std:: cout << "        Device global mem size: " << deviceGlobalMemSize / 1024 / 1024 << "mb" << std::endl;
+            std::cout << "        Device global mem size: " << deviceGlobalMemSize / 1024 / 1024 << " Mb" << std::endl;
 
             cl_uint deviceClockFrequency = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(deviceClockFrequency), &deviceClockFrequency, nullptr));
-            std:: cout << "        Device clock frequency: " << deviceClockFrequency << "MHz" << std::endl;
+            std::cout << "        Device clock frequency: " << deviceClockFrequency << " MHz" << std::endl;
 
             size_t deviceDriverVersionSize = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DRIVER_VERSION, 0, nullptr, &deviceDriverVersionSize));
