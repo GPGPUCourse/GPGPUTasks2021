@@ -5,18 +5,18 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-//#include <string>
-//#include <algorithm>
 
 
 template<typename T>
-std::string to_string(T value) {
+std::string to_string(T value)
+{
     std::ostringstream ss;
     ss << value;
     return ss.str();
 }
 
-void reportError(cl_int err, const std::string &filename, int line) {
+void reportError(cl_int err, const std::string &filename, int line)
+{
     if (CL_SUCCESS == err)
         return;
 
@@ -30,7 +30,8 @@ void reportError(cl_int err, const std::string &filename, int line) {
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
 
-int main() {
+int main()
+{
     // Пытаемся слинковаться с символами OpenCL API в runtime (через библиотеку libs/clew)
     if (!ocl_init())
         throw std::runtime_error("Can't init OpenCL driver!");
@@ -40,9 +41,7 @@ int main() {
     // Нажмите слева: "OpenCL Runtime" -> "Query Platform Info" -> "clGetPlatformIDs"
     // Прочитайте документацию clGetPlatformIDs и убедитесь, что этот способ узнать, сколько есть платформ, соответствует документации:
     cl_uint platformsCount = 0;
-    OCL_SAFE_CALL(
-            clGetPlatformIDs(10 /* If platforms is not NULL, the num_entries must be greater than zero. */, nullptr,
-                             &platformsCount));
+    OCL_SAFE_CALL(clGetPlatformIDs(10 /* If platforms is not NULL, the num_entries must be greater than zero. */, nullptr, &platformsCount));
     std::cout << "Number of OpenCL platforms: " << platformsCount << std::endl;
 
     // Тот же метод используется для того, чтобы получить идентификаторы всех платформ - сверьтесь с документацией, что это сделано верно:
