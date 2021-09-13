@@ -110,6 +110,54 @@ int main()
             // - Тип устройства (видеокарта/процессор/что-то странное)
             // - Размер памяти устройства в мегабайтах
             // - Еще пару или более свойств устройства, которые вам покажутся наиболее интересными
+            cl_device_id device = devices[deviceIndex];
+
+            // Название устройства
+            size_t deviceNameSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, nullptr, &deviceNameSize));
+            std::vector<unsigned char> deviceName(deviceNameSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, deviceNameSize, deviceName.data(), nullptr));
+
+            // Тип устройства (видеокарта/процессор/что-то странное)
+            cl_device_type deviceType;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 8, &deviceType, nullptr));
+
+            // Размер памяти устройства в мегабайтах
+            cl_ulong deviceMemory;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, 8, &deviceMemory, nullptr));
+            deviceMemory /= 1 << 20;
+
+            // Поддержка коррекции ошибок
+            cl_bool errorCorrectionSupport;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_ERROR_CORRECTION_SUPPORT, 4, &errorCorrectionSupport, nullptr));
+
+            // Вендор устройства
+            size_t deviceVendorSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &deviceVendorSize));
+            std::vector<unsigned char> deviceVendor(deviceVendorSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VENDOR, deviceVendorSize, deviceVendor.data(), nullptr));
+
+            // Поддерживаемая устройством версия OpenCL
+            size_t deviceSupportedVersionSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VERSION, 0, nullptr, &deviceSupportedVersionSize));
+            std::vector<unsigned char> deviceSupportedVersion(deviceSupportedVersionSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VERSION, deviceSupportedVersionSize, deviceSupportedVersion.data(), nullptr));
+
+            // Версия драйвера OpenCL
+            size_t deviceDriverSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DRIVER_VERSION, 0, nullptr, &deviceDriverSize));
+            std::vector<unsigned char> deviceDriver(deviceDriverSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DRIVER_VERSION, deviceDriverSize, deviceDriver.data(), nullptr));
+
+            // Отобразим информацию про устройство
+            std::cout << "       Device #" << (deviceIndex + 1) << "/" << devicesCount << std::endl;
+            std::cout << "           Type: " << deviceType << std::endl;
+            std::cout << "           Name: " << deviceName.data() << std::endl;
+            std::cout << "           Vendor: " << deviceVendor.data() << std::endl;
+            std::cout << "           OpenCL version supported by the device: " << deviceSupportedVersion.data() << std::endl;
+            std::cout << "           Device driver version: " << deviceDriver.data() << std::endl;
+            std::cout << "           Memory: " << deviceMemory << " MB" << std::endl;
+            std::cout << "           ECC: " << (errorCorrectionSupport ? "supported" : "not supported") << std::endl;
         }
     }
 
