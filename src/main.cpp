@@ -56,17 +56,30 @@ int main()
         // Не забывайте проверять коды ошибок с помощью макроса OCL_SAFE_CALL
         size_t platformNameSize = 0;
         OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_NAME, 0, nullptr, &platformNameSize));
+
         // TODO 1.1
         // Попробуйте вместо CL_PLATFORM_NAME передать какое-нибудь случайное число - например 239
         // Т.к. это некорректный идентификатор параметра платформы - то метод вернет код ошибки
         // Макрос OCL_SAFE_CALL заметит это, и кинет ошибку с кодом
+        // code:
+        //   OCL_SAFE_CALL(clGetPlatformInfo(platform, 729, 0, nullptr, &platformNameSize));
+        // output:
+        //   terminate called after throwing an instance of 'std::runtime_error'
+        //     what():  OpenCL error code -30 encountered at /home/phoenix-asv/Projects/csc-gp-gpu-course/src/main.cpp:64
+
         // Откройте таблицу с кодами ошибок:
         // libs/clew/CL/cl.h:103
         // P.S. Быстрый переход к файлу в CLion: Ctrl+Shift+N -> cl.h (или даже с номером строки: cl.h:103) -> Enter
         // Найдите там нужный код ошибки и ее название
+        // error name and code:
+        //  CL_INVALID_VALUE -30
+
         // Затем откройте документацию по clGetPlatformInfo и в секции Errors найдите ошибку, с которой столкнулись
         // в документации подробно объясняется, какой ситуации соответствует данная ошибка, и это позволит, проверив код, понять, чем же вызвана данная ошибка (некорректным аргументом param_name)
         // Обратите внимание, что в этом же libs/clew/CL/cl.h файле указаны всевоможные defines, такие как CL_DEVICE_TYPE_GPU и т.п.
+        // documentation:
+        //   CL_INVALID_VALUE if param_name is not one of the supported values or if size in bytes
+        //   specified by param_value_size is less than size of return type and param_value is not a NULL value.
 
         // TODO 1.2
         // Аналогично тому, как был запрошен список идентификаторов всех платформ - так и с названием платформы, теперь, когда известна длина названия - его можно запросить:
