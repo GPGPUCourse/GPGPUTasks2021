@@ -131,13 +131,13 @@ int main()
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_GLOBAL_MEM_SIZE, 0, nullptr, &mem_size_size));
             cl_uint mem_size;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_GLOBAL_MEM_SIZE, mem_size_size, &mem_size, nullptr));
-            std::cout << "        Memory size: " << mem_size << std::endl;
+            std::cout << "        Memory size: " << mem_size / (1024 * 1024.0) << std::endl;
 
             size_t max_mem_size_size = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_MAX_MEM_ALLOC_SIZE, 0, nullptr, &max_mem_size_size));
             cl_uint max_mem_size;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_MAX_MEM_ALLOC_SIZE, max_mem_size_size, &max_mem_size, nullptr));
-            std::cout << "        Max size of memory object allocation: " << max_mem_size << std::endl;
+            std::cout << "        Max size of memory object allocation: " << max_mem_size / (1024 * 1024.0) << std::endl;
 
             size_t version_size = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_OPENCL_C_VERSION, 0, nullptr, &version_size));
