@@ -48,9 +48,13 @@ int main()
     std::vector<cl_platform_id> platforms(platformsCount);
     OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
 
+    size_t indentSize = 0;
+    std::string indent;
     for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
         std::cout << "Platform #" << (platformIndex + 1) << "/" << platformsCount << std::endl;
         cl_platform_id platform = platforms[platformIndex];
+        indentSize = 1;
+        indent = std::string(indentSize, '\t');
 
         // Откройте документацию по "OpenCL Runtime" -> "Query Platform Info" -> "clGetPlatformInfo"
         // Не забывайте проверять коды ошибок с помощью макроса OCL_SAFE_CALL
@@ -71,15 +75,25 @@ int main()
         // TODO 1.2
         // Аналогично тому, как был запрошен список идентификаторов всех платформ - так и с названием платформы, теперь, когда известна длина названия - его можно запросить:
         std::vector<unsigned char> platformName(platformNameSize, 0);
-        // clGetPlatformInfo(...);
-        std::cout << "    Platform name: " << platformName.data() << std::endl;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_NAME, platformNameSize, platformName.data(), nullptr));
+        std::cout << indent << "Platform name: " << platformName.data() << std::endl;
 
         // TODO 1.3
         // Запросите и напечатайте так же в консоль вендора данной платформы
+        size_t platformVendorNameSize = 0;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, 0, nullptr, &platformVendorNameSize));
+        std::vector<unsigned char> platformVendorName(platformVendorNameSize, 0);
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, platformVendorNameSize, platformVendorName.data(), nullptr));
+        std::cout << indent << "Vendor name: " << platformVendorName.data() << std::endl;
 
         // TODO 2.1
         // Запросите число доступных устройств данной платформы (аналогично тому, как это было сделано для запроса числа доступных платформ - см. секцию "OpenCL Runtime" -> "Query Devices")
         cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        std::cout << indent << "Number of Devices: " << devicesCount << std::endl;  
+        
+        std::vector<cl_device_id> devices(devicesCount, 0);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
 
         for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
             // TODO 2.2
@@ -88,6 +102,47 @@ int main()
             // - Тип устройства (видеокарта/процессор/что-то странное)
             // - Размер памяти устройства в мегабайтах
             // - Еще пару или более свойств устройства, которые вам покажутся наиболее интересными
+            std::cout << indent << "Device #" << deviceIndex + 1 << "/" << devicesCount << std::endl;
+            indentSize = 2;
+            indent = std::string(indentSize, '\t');
+            cl_device_id device = devices[deviceIndex];
+
+            // name
+            size_t deviceNameSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, 0, nullptr, &deviceNameSize));
+            std::vector<unsigned char> deviceName(deviceNameSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_NAME, deviceNameSize, deviceName.data(), nullptr));
+            std::cout << indent << "Device name: " << deviceName.data() << std::endl;
+
+            //type of Device
+            cl_device_type deviceType;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 8, &deviceType, nullptr));
+            std::cout << indent << "Device type: " << deviceType << std::endl;
+
+            //memory
+            cl_ulong deviceMem; 
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_SIZE, 8, &deviceMem, nullptr));
+            std::cout << indent << "Device memory: " << deviceMem << " bytes" << std::endl;
+
+
+            //is available
+            cl_bool isAvailable;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_AVAILABLE, 4, &isAvailable, nullptr));
+            std::cout << indent << (isAvailable ? "Device is available" : "Device is inavailable") << std::endl;
+
+            //device version
+            size_t deviceVersionSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VERSION, 0, nullptr, &deviceVersionSize));
+            std::vector<unsigned char> deviceVersion(deviceVersionSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_VERSION, deviceVersionSize, deviceVersion.data(), nullptr));
+            std::cout << indent << "Device version: " << deviceVersion.data() << std::endl;
+
+            //driver version
+            size_t driverVersionSize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DRIVER_VERSION, 0, nullptr, &driverVersionSize));
+            std::vector<unsigned char> driverVersion(driverVersionSize, 0);
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DRIVER_VERSION, driverVersionSize, driverVersion.data(), nullptr));
+            std::cout << indent << "Driver version: " << driverVersion.data() << std::endl;
         }
     }
 

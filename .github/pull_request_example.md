@@ -7,11 +7,18 @@
 <details><summary>Локальный вывод</summary><p>
 
 <pre>
-$ ./enumDevices
 Number of OpenCL platforms: 1
 Platform #1/1
-    Platform name: 
-The command "./enumDevices" exited with 0.
+        Platform name: Intel(R) CPU Runtime for OpenCL(TM) Applications
+        Vendor name: Intel(R) Corporation
+        Number of Devices: 1
+        Device #1/1
+                Device name: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+                Device type: 2
+                Device memory: 8251219968 bytes
+                Device is available
+                Device version: OpenCL 2.1 (Build 0)
+                Driver version: 18.1.0.0920
 </pre>
 
 </p></details>
