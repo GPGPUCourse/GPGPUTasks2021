@@ -31,8 +31,51 @@ void reportError(cl_int err, const std::string &filename, int line)
     throw std::runtime_error(message);
 }
 
+cl_int errcode;
+
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
+cl_device_id get_cl_device_id()
+{
+    // straight from task00
+    cl_uint platformsCount = 0;
+    OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
+    if (platformsCount == 0) {
+        throw std::runtime_error("No OpenCL platforms found");
+    }
+    std::vector<cl_platform_id> platforms(platformsCount);
+    OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
+
+    cl_device_id cpu_device;
+    bool found = false;
+
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platforms[platformIndex], CL_DEVICE_TYPE_ALL, 1, nullptr, &devicesCount));
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(
+                clGetDeviceIDs(platforms[platformIndex], CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
+
+        for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            cl_device_type deviceType = CL_DEVICE_TYPE_ALL;
+            OCL_SAFE_CALL(clGetDeviceInfo(devices[deviceIndex], CL_DEVICE_TYPE, sizeof(cl_device_type), &deviceType,
+                                          nullptr));
+            if (CL_DEVICE_TYPE_GPU == deviceType) {
+                std::cout << "Found GPU" << std::endl;
+                return devices[deviceIndex];
+            } else if (!found && CL_DEVICE_TYPE_CPU == deviceType) {
+                cpu_device = devices[deviceIndex];
+                found = true;
+            }
+        }
+    }
+
+    if (!found) {
+        throw std::runtime_error("No OpenCL GPU or CPU found");
+    }
+
+    return cpu_device;
+}
 
 int main()
 {
@@ -42,19 +85,30 @@ int main()
 
     // TODO 1 По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
     // (если в списке устройств есть хоть одна видеокарта - выберите ее, если нету - выбирайте процессор)
+    cl_device_id device = get_cl_device_id();
 
     // TODO 2 Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
     // Не забывайте проверять все возвращаемые коды на успешность (обратите внимание, что в данном случае метод возвращает
     // код по переданному аргументом errcode_ret указателю)
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
+    auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &errcode);
+    OCL_SAFE_CALL(errcode);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
     // Убедитесь, что в соответствии с документацией вы создали in-order очередь задач
     // И хорошо бы сразу добавить в конце clReleaseQueue (не забывайте освобождать ресурсы)
+    auto command_queue = clCreateCommandQueue(context, device, 0, &errcode);
+    cl_command_queue_properties props;
+    OCL_SAFE_CALL(clGetCommandQueueInfo(command_queue, CL_QUEUE_PROPERTIES, sizeof(cl_bitfield), &props, nullptr));
+    if (props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+        std::cout << "Out of order execution" << std::endl;
+    } else {
+        std::cout << "In order execution" << std::endl;
+    }
 
-    unsigned int n = 1000*1000;
+    unsigned int n = 1000 * 1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
     std::vector<float> as(n, 0);
     std::vector<float> bs(n, 0);
@@ -72,6 +126,12 @@ int main()
     // Данные в as и bs можно прогрузить этим же методом, скопировав данные из host_ptr=as.data() (и не забыв про битовый флаг, на это указывающий)
     // или же через метод Buffer Objects -> clEnqueueWriteBuffer
     // И хорошо бы сразу добавить в конце clReleaseMemObject (аналогично, все дальнейшие ресурсы вроде OpenCL под-программы, кернела и т.п. тоже нужно освобождать)
+    cl_mem a_buf = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY, sizeof(float) * as.size(), as.data(), &errcode);
+    OCL_SAFE_CALL(errcode);
+    cl_mem b_buf = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY, sizeof(float) * bs.size(), bs.data(), &errcode);
+    OCL_SAFE_CALL(errcode);
+    cl_mem c_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * cs.size(), nullptr, &errcode);
+    OCL_SAFE_CALL(errcode);
 
     // TODO 6 Выполните TODO 5 (реализуйте кернел в src/cl/aplusb.cl)
     // затем убедитесь, что выходит загрузить его с диска (убедитесь что Working directory выставлена правильно - см. описание задания),
@@ -116,7 +176,7 @@ int main()
     }
 
     // TODO 11 Выше увеличьте n с 1000*1000 до 100*1000*1000 (чтобы дальнейшие замеры были ближе к реальности)
-    
+
     // TODO 12 Запустите выполнения кернела:
     // - С одномерной рабочей группой размера 128
     // - В одномерном рабочем пространстве размера roundedUpN, где roundedUpN - наименьшее число, кратное 128 и при этом не меньшее n
@@ -137,7 +197,7 @@ int main()
         // подробнее об этом - см. timer.lapsFiltered
         // P.S. чтобы в CLion быстро перейти к символу (функции/классу/много чему еще), достаточно нажать Ctrl+Shift+Alt+N -> lapsFiltered -> Enter
         std::cout << "Kernel average time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        
+
         // TODO 13 Рассчитайте достигнутые гигафлопcы:
         // - Всего элементов в массивах по n штук
         // - Всего выполняется операций: операция a+b выполняется n раз
@@ -172,6 +232,12 @@ int main()
 //            throw std::runtime_error("CPU and GPU results differ!");
 //        }
 //    }
+
+    OCL_SAFE_CALL(clReleaseMemObject(c_buf));
+    OCL_SAFE_CALL(clReleaseMemObject(b_buf));
+    OCL_SAFE_CALL(clReleaseMemObject(a_buf));
+    OCL_SAFE_CALL(clReleaseCommandQueue(command_queue));
+    OCL_SAFE_CALL(clReleaseContext(context));
 
     return 0;
 }
