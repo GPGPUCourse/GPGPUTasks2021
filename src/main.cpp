@@ -109,7 +109,7 @@ int main()
     cl_command_queue command_queue = clCreateCommandQueue(context, chosen_device, 0, &ret_code);
     OCL_RET_CHECK(ret_code);
 
-    unsigned int n = 1000*1000;
+    unsigned int n = 100*1000*1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
     std::vector<float> as(n, 0);
     std::vector<float> bs(n, 0);
@@ -195,6 +195,7 @@ int main()
     }
 
     // TODO 11 Выше увеличьте n с 1000*1000 до 100*1000*1000 (чтобы дальнейшие замеры были ближе к реальности)
+    // done
     
     // TODO 12 Запустите выполнения кернела:
     // - С одномерной рабочей группой размера 128
