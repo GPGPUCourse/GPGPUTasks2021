@@ -187,11 +187,11 @@ int main()
 
     // TODO 10 Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
-        // unsigned int i = 0;
-        // clSetKernelArg(kernel, i++, ..., ...);
-        // clSetKernelArg(kernel, i++, ..., ...);
-        // clSetKernelArg(kernel, i++, ..., ...);
-        // clSetKernelArg(kernel, i++, ..., ...);
+         unsigned int i = 0;
+         clSetKernelArg(kernel, i++, sizeof(cl_mem), &buffer_a);
+         clSetKernelArg(kernel, i++, sizeof(cl_mem), &buffer_b);
+         clSetKernelArg(kernel, i++, sizeof(cl_mem), &buffer_c);
+         clSetKernelArg(kernel, i++, sizeof(unsigned int), &n);
     }
 
     // TODO 11 Выше увеличьте n с 1000*1000 до 100*1000*1000 (чтобы дальнейшие замеры были ближе к реальности)
