@@ -155,6 +155,11 @@ int main()
     // см. Runtime APIs -> Program Objects -> clCreateProgramWithSource
     // у string есть метод c_str(), но обратите внимание, что передать вам нужно указатель на указатель
 
+    const char * source = kernel_sources.data();
+    const size_t source_len = kernel_sources.length();
+    cl_program program = clCreateProgramWithSource(context, 1, &source, &source_len, &ret_code);
+    OCL_RET_CHECK(ret_code);
+
     // TODO 8 Теперь скомпилируйте программу и напечатайте в консоль лог компиляции
     // см. clBuildProgram
 
