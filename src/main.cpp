@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <cassert>
-
+#include <utility>
 
 template <typename T>
 std::string to_string(T value)
@@ -33,6 +33,46 @@ void reportError(cl_int err, const std::string &filename, int line)
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
+std::pair<cl_platform_id, cl_device_id> chooseDevice() {
+    cl_uint platformsCount = 0;
+    OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
+    std::vector<cl_platform_id> platforms(platformsCount);
+    OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
+
+    std::vector<std::vector<cl_device_id>> devices(platformsCount);
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        cl_platform_id platform = platforms[platformIndex];
+        cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        devices[platformIndex].resize(devicesCount);
+        OCL_SAFE_CALL(
+                clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices[platformIndex].data(), nullptr));
+    }
+
+    bool cpu_device_found{false};
+    cl_platform_id cpu_platform;
+    cl_device_id cpu_device;
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        for (const auto device: devices[platformIndex]) {
+            cl_device_type deviceType;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(deviceType), &deviceType, nullptr));
+            switch (deviceType) {
+                case CL_DEVICE_TYPE_GPU:
+                    return {platforms[platformIndex], device};
+                case CL_DEVICE_TYPE_CPU:
+                    if (!cpu_device_found) {
+                        cpu_device_found = true;
+                        cpu_platform = platforms[platformIndex];
+                        cpu_device = device;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    return {cpu_platform, cpu_device};
+}
 
 int main()
 {
@@ -42,6 +82,7 @@ int main()
 
     // TODO 1 По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
     // (если в списке устройств есть хоть одна видеокарта - выберите ее, если нету - выбирайте процессор)
+    const auto platform_device = chooseDevice();
 
     // TODO 2 Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
