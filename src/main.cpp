@@ -128,6 +128,15 @@ int main()
     // или же через метод Buffer Objects -> clEnqueueWriteBuffer
     // И хорошо бы сразу добавить в конце clReleaseMemObject (аналогично, все дальнейшие ресурсы вроде OpenCL под-программы, кернела и т.п. тоже нужно освобождать)
 
+    cl_mem buffer_a = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * n, as.data(), &ret_code);
+    OCL_RET_CHECK(ret_code);
+
+    cl_mem buffer_b = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * n, bs.data(), &ret_code);
+    OCL_RET_CHECK(ret_code);
+
+    cl_mem buffer_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * n, nullptr, &ret_code);
+    OCL_RET_CHECK(ret_code);
+
     // TODO 6 Выполните TODO 5 (реализуйте кернел в src/cl/aplusb.cl)
     // затем убедитесь, что выходит загрузить его с диска (убедитесь что Working directory выставлена правильно - см. описание задания),
     // напечатав исходники в консоль (if проверяет, что удалось считать хоть что-то)
@@ -227,6 +236,10 @@ int main()
 //            throw std::runtime_error("CPU and GPU results differ!");
 //        }
 //    }
+
+    OCL_SAFE_CALL(clReleaseMemObject(buffer_a));
+    OCL_SAFE_CALL(clReleaseMemObject(buffer_b));
+    OCL_SAFE_CALL(clReleaseMemObject(buffer_c));
 
     OCL_SAFE_CALL(clReleaseCommandQueue(command_queue));
     OCL_SAFE_CALL(clReleaseContext(context));
