@@ -216,7 +216,8 @@ int main()
         timer t;
         for (unsigned int i = 0; i < 20; ++i) {
             cl_event event;
-            clEnqueueReadBuffer(queue, csBuff, true, 0, n * sizeof(float), cs.data(), 0, nullptr, &event);
+            OCL_SAFE_CALL(clEnqueueReadBuffer(queue, csBuff, true, 0, n * sizeof(float), cs.data(), 0, nullptr, &event));
+            OCL_SAFE_CALL(clWaitForEvents(1, &event));
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
