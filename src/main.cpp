@@ -86,7 +86,7 @@ int main() {
     auto commandQueue = clCreateCommandQueue(context, device, 0, &errcode);
     OCL_SAFE_CALL(errcode);
 
-    unsigned int n = 1000 * 1000 * 10;
+    unsigned int n = 1000 * 1000 * 1;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
     std::vector<float> as(n, 0);
     std::vector<float> bs(n, 0);
@@ -166,9 +166,9 @@ int main() {
     {
 
         unsigned int i = 0;
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &as_buff));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &bs_buff));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &cs_buff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &as_buff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &bs_buff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &cs_buff));
         OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(n), &n));
     }
 
