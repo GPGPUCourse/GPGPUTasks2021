@@ -242,11 +242,14 @@ int main()
     {
         timer t;
         for (unsigned int i = 0; i < 20; ++i) {
-            // clEnqueueReadBuffer...
+            cl_event event;
+            OCL_SAFE_CALL(clEnqueueReadBuffer(command_queue, buffer_c, false, 0, sizeof(float) * n, cs.data(), 0, nullptr, &event));
+            OCL_SAFE_CALL(clWaitForEvents(1, &event));
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "VRAM -> RAM bandwidth: " << 0 << " GB/s" << std::endl;
+        float vram_to_ram_bandwidth = (float) 3 * n * sizeof(float) / (1 << 30) / t.lapAvg();
+        std::cout << "VRAM -> RAM bandwidth: " << vram_to_ram_bandwidth << " GB/s" << std::endl;
     }
 
     // TODO 16 Сверьте результаты вычислений со сложением чисел на процессоре (и убедитесь, что если в кернеле сделать намеренную ошибку, то эта проверка поймает ошибку)
