@@ -182,6 +182,9 @@ int main()
     // TODO 9 Создайте OpenCL-kernel в созданной подпрограмме (в одной подпрограмме может быть несколько кернелов, но в данном случае кернел один)
     // см. подходящую функцию в Runtime APIs -> Program Objects -> Kernel Objects
 
+    cl_kernel kernel = clCreateKernel(program, "aplusb", &ret_code);
+    OCL_RET_CHECK(ret_code);
+
     // TODO 10 Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
         // unsigned int i = 0;
