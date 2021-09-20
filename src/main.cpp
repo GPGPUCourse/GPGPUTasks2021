@@ -145,9 +145,21 @@ int main()
     // TODO 7 Создайте OpenCL-подпрограмму с исходниками кернела
     // см. Runtime APIs -> Program Objects -> clCreateProgramWithSource
     // у string есть метод c_str(), но обратите внимание, что передать вам нужно указатель на указатель
+    auto kernel_code = kernel_sources.c_str();
+    cl_program sub_program = clCreateProgramWithSource(context, 1, &kernel_code, NULL, &status);
+    OCL_SAFE_CALL(status);
 
     // TODO 8 Теперь скомпилируйте программу и напечатайте в консоль лог компиляции
     // см. clBuildProgram
+    auto buildStatus = clBuildProgram(sub_program, 1, &platform_device.second, NULL, NULL, NULL);
+    size_t log_size = 0;
+    OCL_SAFE_CALL(clGetProgramBuildInfo(sub_program, platform_device.second, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size));
+    if (log_size > 1) {
+        std::vector<char> log(log_size);
+        OCL_SAFE_CALL(clGetProgramBuildInfo(sub_program, platform_device.second, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr));
+        std::cout << "Log:\n" << log.data() << std::endl;
+    }
+    OCL_SAFE_CALL(buildStatus);
 
     // А также напечатайте лог компиляции (он будет очень полезен, если в кернеле есть синтаксические ошибки - т.е. когда clBuildProgram вернет CL_BUILD_PROGRAM_FAILURE)
     // Обратите внимание, что при компиляции на процессоре через Intel OpenCL драйвер - в логе указывается, какой ширины векторизацию получилось выполнить для кернела
