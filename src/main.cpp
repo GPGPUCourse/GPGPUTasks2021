@@ -32,6 +32,7 @@ void reportError(cl_int err, const std::string &filename, int line)
 }
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
+#define OCL_RET_CHECK(expr) reportError(expr, __FILE__, __LINE__ - 1)
 
 
 cl_int ret_code;
@@ -98,7 +99,7 @@ int main()
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
 
     cl_context context = clCreateContext(nullptr, 1, &chosen_device, nullptr, nullptr, &ret_code);
-    OCL_SAFE_CALL(ret_code);
+    OCL_RET_CHECK(ret_code);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
@@ -106,7 +107,7 @@ int main()
     // И хорошо бы сразу добавить в конце clReleaseQueue (не забывайте освобождать ресурсы)
 
     cl_command_queue command_queue = clCreateCommandQueue(context, chosen_device, 0, &ret_code);
-    OCL_SAFE_CALL(ret_code);
+    OCL_RET_CHECK(ret_code);
 
     unsigned int n = 1000*1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
