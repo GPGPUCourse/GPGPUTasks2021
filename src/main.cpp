@@ -89,6 +89,9 @@ int main()
     // Не забывайте проверять все возвращаемые коды на успешность (обратите внимание, что в данном случае метод возвращает
     // код по переданному аргументом errcode_ret указателю)
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
+    cl_int status;
+    auto context = clCreateContext(NULL, 1, &platform_device.second, NULL, NULL, &status);
+    OCL_SAFE_CALL(status);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
@@ -213,6 +216,8 @@ int main()
 //            throw std::runtime_error("CPU and GPU results differ!");
 //        }
 //    }
+
+    OCL_SAFE_CALL(clReleaseContext(context));
 
     return 0;
 }
