@@ -71,6 +71,7 @@ std::pair<cl_platform_id, cl_device_id> chooseDevice() {
             }
         }
     }
+    assert(cpu_device_found);
     return {cpu_platform, cpu_device};
 }
 
@@ -118,6 +119,15 @@ int main()
     // Данные в as и bs можно прогрузить этим же методом, скопировав данные из host_ptr=as.data() (и не забыв про битовый флаг, на это указывающий)
     // или же через метод Buffer Objects -> clEnqueueWriteBuffer
     // И хорошо бы сразу добавить в конце clReleaseMemObject (аналогично, все дальнейшие ресурсы вроде OpenCL под-программы, кернела и т.п. тоже нужно освобождать)
+
+    cl_mem asBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * n, as.data(), &status);
+    OCL_SAFE_CALL(status);
+
+    cl_mem bsBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * n, bs.data(), &status);
+    OCL_SAFE_CALL(status);
+
+    cl_mem csBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * n, NULL, &status);
+    OCL_SAFE_CALL(status);
 
     // TODO 6 Выполните TODO 5 (реализуйте кернел в src/cl/aplusb.cl)
     // затем убедитесь, что выходит загрузить его с диска (убедитесь что Working directory выставлена правильно - см. описание задания),
@@ -221,6 +231,9 @@ int main()
 
     OCL_SAFE_CALL(clReleaseContext(context));
     OCL_SAFE_CALL(clReleaseCommandQueue(q));
+    OCL_SAFE_CALL(clReleaseMemObject(asBuffer));
+    OCL_SAFE_CALL(clReleaseMemObject(bsBuffer));
+    OCL_SAFE_CALL(clReleaseMemObject(csBuffer));
 
     return 0;
 }
