@@ -11,7 +11,8 @@
 // - На вход дано три массива float чисел; единственное, чем они отличаются от обычных указателей - модификатором __global, т.к. это глобальная память устройства (видеопамять)
 // - Четвертым и последним аргументом должно быть передано количество элементов в каждом массиве (unsigned int, главное, чтобы тип был согласован с типом в соответствующем clSetKernelArg в T0D0 10)
 
-__kernel void aplusb(...)
+__kernel void aplusb(__global const float* a, __global const float* b,
+                     __global float* c, unsigned n)
 {
     // Узнать, какой workItem выполняется в этом потоке поможет функция get_global_id
     // см. в документации https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/
@@ -21,4 +22,12 @@ __kernel void aplusb(...)
     // и в таком случае, если сделать обращение к массиву просто по индексу=get_global_id(0), будет undefined behaviour (вплоть до повисания ОС)
     // поэтому нужно либо дополнить массив данных длиной до кратности размеру рабочей группы,
     // либо сделать return в кернеле до обращения к данным в тех WorkItems, где get_global_id(0) выходит за границы данных (явной проверкой)
+
+    const unsigned itemId = get_global_id(0);
+
+    if(itemId >= n){
+        return;
+    }
+
+    c[itemId] = a[itemId] + b[itemId];
 }
