@@ -97,6 +97,8 @@ int main()
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
     // Убедитесь, что в соответствии с документацией вы создали in-order очередь задач
     // И хорошо бы сразу добавить в конце clReleaseQueue (не забывайте освобождать ресурсы)
+    auto q = clCreateCommandQueue(context, platform_device.second, 0, &status);
+    OCL_SAFE_CALL(status);
 
     unsigned int n = 1000*1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
@@ -218,6 +220,7 @@ int main()
 //    }
 
     OCL_SAFE_CALL(clReleaseContext(context));
+    OCL_SAFE_CALL(clReleaseCommandQueue(q));
 
     return 0;
 }
