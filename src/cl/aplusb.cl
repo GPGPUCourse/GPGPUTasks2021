@@ -6,13 +6,22 @@
 
 #line 8 // Седьмая строчка теперь восьмая (при ошибках компиляции в логе компиляции будут указаны корректные строчки благодаря этой директиве)
 
-// TODO 5 реализуйте кернел:
+// 5 реализуйте кернел:
 // - От обычной функции кернел отличается модификатором __kernel и тем, что возвращаемый тип всегда void
 // - На вход дано три массива float чисел; единственное, чем они отличаются от обычных указателей - модификатором __global, т.к. это глобальная память устройства (видеопамять)
 // - Четвертым и последним аргументом должно быть передано количество элементов в каждом массиве (unsigned int, главное, чтобы тип был согласован с типом в соответствующем clSetKernelArg в T0D0 10)
 
-__kernel void aplusb(...)
+__kernel void aplusb(__global float *as,__global float *bs,__global float *cs, unsigned int n)
 {
+  // we suppose that there's
+  // the workgroup size is how many work items there are
+  size_t array_idx = get_global_id(0;
+  if (array_idx >= n) {
+    return;
+  }
+  for (unsigned int i = 0; i < n; ++i) {
+    cs[array_idx] = as[array_idx] + bs[array_idx];
+  }
     // Узнать, какой workItem выполняется в этом потоке поможет функция get_global_id
     // см. в документации https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/
     // OpenCL Compiler -> Built-in Functions -> Work-Item Functions
