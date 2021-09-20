@@ -205,12 +205,13 @@ int main()
     //   - Сохранить событие "кернел запущен" (см. аргумент "cl_event *event")
     //   - Дождаться завершения полунного события - см. в документации подходящий метод среди Event Objects
     {
-        size_t workGroupSize = 128;
-        size_t global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
+        size_t work_group_size = 128;
+        size_t global_work_size = (n + work_group_size - 1) / work_group_size * work_group_size;
         timer t; // Это вспомогательный секундомер, он замеряет время своего создания и позволяет усреднять время нескольких замеров
         for (unsigned int i = 0; i < 20; ++i) {
-            // clEnqueueNDRangeKernel...
-            // clWaitForEvents...
+            cl_event event;
+            OCL_SAFE_CALL(clEnqueueNDRangeKernel(command_queue, kernel, 1, nullptr, &global_work_size, &work_group_size, 0, nullptr, &event));
+            OCL_SAFE_CALL(clWaitForEvents(1, &event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
