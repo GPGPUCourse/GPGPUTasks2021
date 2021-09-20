@@ -41,7 +41,7 @@ std::string getDeviceStrProperty(cl_device_id device, cl_device_info property)
     std::vector<unsigned char> deviceProperty(devicePropertySize, 0);
 
     OCL_SAFE_CALL(clGetDeviceInfo(device, property, devicePropertySize, deviceProperty.data(), nullptr));
-    std::string strPropertyVal(deviceProperty.begin(), deviceProperty.end());
+    std::string strPropertyVal(deviceProperty.begin(), --deviceProperty.end());
     return strPropertyVal;
 }
 
@@ -69,7 +69,8 @@ int main()
     cl_platform_id platform = platforms[0];
     cl_uint devicesCount = 0;
     OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
-    std::cout << "Number of availible devices: " << devicesCount << std::endl;
+    assert(devicesCount >= 1 && "Devices count should be greater than 0");
+
     std::vector<cl_device_id> devices(devicesCount);
     OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
     // try to find gpu
