@@ -7,11 +7,23 @@
 <details><summary>Локальный вывод</summary><p>
 
 <pre>
-$ ./enumDevices
 Number of OpenCL platforms: 1
-Platform #1/1
-    Platform name: 
-The command "./enumDevices" exited with 0.
+no GPU device
+Data generated for n=100000000!
+Log:
+Compilation started
+Compilation done
+Linking started
+Linking done
+Device build started
+Device build done
+Kernel <aplusb> was successfully vectorized (8)
+Done.
+Kernel average time: 0.101015+-0.00081907 s
+GFlops: 0.989956
+VRAM bandwidth: 11.0636 GB/s
+Result data transfer time: 0.0386717+-0.00118461 s
+VRAM -> RAM bandwidth: 9.63311 GB/s
 </pre>
 
 </p></details>
