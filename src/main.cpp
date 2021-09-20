@@ -32,6 +32,42 @@ void reportError(cl_int err, const std::string &filename, int line) {
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
+void get_device(cl_device_id &device) {
+    cl_uint platformsCount = 0;
+    OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
+    std::cout << "Number of OpenCL platforms: " << platformsCount << std::endl;
+
+    std::vector<cl_platform_id> platforms(platformsCount);
+    OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
+
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        std::cout << "Platform #" << (platformIndex + 1) << "/" << platformsCount << std::endl;
+        cl_platform_id platform = platforms[platformIndex];
+        size_t platformNameSize = 0;
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_NAME, 0, nullptr, &platformNameSize));
+
+        std::vector<unsigned char> platformName(platformNameSize, 0);
+        OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_NAME, platformNameSize, platformName.data(), nullptr));
+        std::cout << "    Platform name: " << platformName.data() << std::endl;
+
+        cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
+
+        for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            cl_device_id device_curr = devices[deviceIndex];
+
+            cl_device_type deviceType = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device_curr, CL_DEVICE_TYPE, sizeof(deviceType), &deviceType, nullptr));
+            device = device_curr;
+            if (deviceType == CL_DEVICE_TYPE_GPU) {
+                return;
+            }
+        }
+    }
+}
 
 int main() {
     // Пытаемся слинковаться с символами OpenCL API в runtime (через библиотеку clew)
@@ -59,14 +95,8 @@ int main() {
     }
 
     // Пока выберем cpu, чтобы избежать разных проблем с куда драйверами
-    auto platform = platforms[0];
-
-    cl_uint devicesCount = 0;
-    OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
-    std::vector<cl_device_id> devices(devicesCount);
-    OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
-
-    auto device = devices[0];
+    cl_device_id device = nullptr;
+    get_device(device);
 
     // TODO 2 Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
@@ -75,7 +105,7 @@ int main() {
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
 
     cl_int errcode = 0;
-    auto context = clCreateContext(nullptr, devices.size(), devices.data(), nullptr, nullptr, &errcode);
+    auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &errcode);
     OCL_SAFE_CALL(errcode);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
