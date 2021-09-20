@@ -2,6 +2,7 @@
 // Этот include виден только для CLion парсера, это позволяет IDE "знать" ключевые слова вроде __kernel, __global
 // а также уметь подсказывать OpenCL методы, описанные в данном инклюде (такие как get_global_id(...) и get_local_id(...))
 #include "clion_defines.cl"
+#include <stdio.h>
 #endif
 
 #line 8 // Седьмая строчка теперь восьмая (при ошибках компиляции в логе компиляции будут указаны корректные строчки благодаря этой директиве)
@@ -13,9 +14,8 @@
 
 __kernel void aplusb(__global float *as,__global float *bs,__global float *cs, unsigned int n)
 {
-  // we suppose that there's
-  // the workgroup size is how many work items there are
-  size_t array_idx = get_global_id(0;
+  size_t array_idx = get_global_id(0);
+//  std::cout << n << " " << array_idx << std::endl;
   if (array_idx >= n) {
     return;
   }
