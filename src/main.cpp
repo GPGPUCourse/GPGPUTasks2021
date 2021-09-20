@@ -29,40 +29,7 @@ void reportError(cl_int err, const std::string &filename, int line) {
 }
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
-
-
-void reportErrorAndFree(cl_int err, size_t depth, cl_context *ctx, cl_command_queue *qu, cl_mem *buf1,
-                        cl_mem *buf2, cl_mem *buf3, cl_program *prog, const std::string &filename, int line) {
-    if (CL_SUCCESS == err)
-        return;
-
-    // Таблица с кодами ошибок:
-    // libs/clew/CL/cl.h:103
-    // P.S. Быстрый переход к файлу в CLion: Ctrl+Shift+N -> cl.h (или даже с номером строки: cl.h:103) -> Enter
-    int maxdepth = 7;
-    if (depth >= maxdepth && prog) {
-        OCL_SAFE_CALL(clReleaseProgram(*prog));
-    }
-    if (depth >= maxdepth - 1 && buf3) {
-        OCL_SAFE_CALL(clReleaseMemObject(*buf3));
-    }
-    if (depth >= maxdepth - 2 && buf2) {
-        OCL_SAFE_CALL(clReleaseMemObject(*buf2));
-    }
-    if (depth >= maxdepth - 3 && buf1) {
-        OCL_SAFE_CALL(clReleaseMemObject(*buf1));
-    }
-    if (depth >= maxdepth - 4 && qu) {
-        OCL_SAFE_CALL(clReleaseCommandQueue(*qu));
-    }
-    if (depth >= maxdepth - 5 && ctx) {
-        OCL_SAFE_CALL(clReleaseContext(*ctx));
-    }
-    std::string message = "OpenCL error code " + to_string(err) + " encountered at " + filename + ":" + to_string(line);
-    throw std::runtime_error(message);
-}
-
-#define OCL_FREE_SAFE_CALL(expr, depth, ctx, qu, buf1, buf2, buf3, prog) reportErrorAndFree(expr, depth, ctx, qu, buf1, buf2, buf3, prog, __FILE__, __LINE__)
+#define OCL_CHECK_FOR_ERROR(code) reportError(code, __FILE__, __LINE__)
 
 /**
  * Get device info which is in char[] format and print it
@@ -150,14 +117,14 @@ int main() {
         CL_CONTEXT_PLATFORM, (cl_context_properties) platforms[0],
         0};
     cl_context ctx = clCreateContext(nullptr, 1, &someDevice, nullptr, nullptr, &err);
-    OCL_FREE_SAFE_CALL(err, 2, &ctx, nullptr, nullptr, nullptr, nullptr, nullptr);
+    OCL_CHECK_FOR_ERROR(err);
 
     // 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
     // Убедитесь, что в соответствии с документацией вы создали in-order очередь задач
     // И хорошо бы сразу добавить в конце clReleaseQueue (не забывайте освобождать ресурсы)
     cl_command_queue qu = clCreateCommandQueue(ctx, someDevice, 0, &err);
-    OCL_FREE_SAFE_CALL(err, 3, &ctx, &qu, nullptr, nullptr, nullptr, nullptr);
+    OCL_CHECK_FOR_ERROR(err);
 
     unsigned int n = 100 * 1000 * 1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
@@ -180,14 +147,14 @@ int main() {
     // И хорошо бы сразу добавить в конце clReleaseMemObject (аналогично, все дальнейшие ресурсы вроде OpenCL под-программы, кернела и т.п. тоже нужно освобождать)
     cl_mem_flags flags_ro = CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY;
     cl_mem buf1 = clCreateBuffer(ctx, flags_ro, sizeof(float) * n, as.data(), &err);
-    OCL_FREE_SAFE_CALL(err, 4 , &ctx, &qu, &buf1, nullptr, nullptr, nullptr);
+    OCL_CHECK_FOR_ERROR(err);
 
     cl_mem buf2 = clCreateBuffer(ctx, flags_ro, sizeof(float) * n, bs.data(), &err);
-    OCL_FREE_SAFE_CALL(err, 5 , &ctx, &qu, &buf1, &buf2, nullptr, nullptr);
+    OCL_CHECK_FOR_ERROR(err);
 
     cl_mem_flags flags_wo = CL_MEM_WRITE_ONLY;
     cl_mem buf3 = clCreateBuffer(ctx, flags_wo, sizeof(float) * n, nullptr, &err);
-    OCL_FREE_SAFE_CALL(err, 6 , &ctx, &qu, &buf1, &buf2, &buf3, nullptr);
+    OCL_CHECK_FOR_ERROR(err);
 
     // 6 Выполните 5 (реализуйте кернел в src/cl/aplusb.cl)
     // затем убедитесь, что выходит загрузить его с диска (убедитесь что Working directory выставлена правильно - см. описание задания),
@@ -208,7 +175,7 @@ int main() {
     const char *c_kernel_sources = kernel_sources.c_str();
     const size_t c_kernel_sources_length = kernel_sources.length();
     cl_program prog = clCreateProgramWithSource(ctx, 1, &c_kernel_sources, &c_kernel_sources_length, &err);
-    OCL_FREE_SAFE_CALL(err, 7 , &ctx, &qu, &buf1, &buf2, &buf3, &prog);
+    OCL_CHECK_FOR_ERROR(err);
 
     // 8 Теперь скомпилируйте программу и напечатайте в консоль лог компиляции
     // см. clBuildProgram
@@ -232,13 +199,13 @@ int main() {
         std::cout << "Build log is empty" << std::endl;
     }
 
-    OCL_FREE_SAFE_CALL(err1, 7 , &ctx, &qu, &buf1, &buf2, &buf3, &prog);
-    OCL_FREE_SAFE_CALL(err2, 7 , &ctx, &qu, &buf1, &buf2, &buf3, &prog);
-    OCL_FREE_SAFE_CALL(err3, 7 , &ctx, &qu, &buf1, &buf2, &buf3, &prog);
+    OCL_CHECK_FOR_ERROR(err1);
+    OCL_CHECK_FOR_ERROR(err2);
+    OCL_CHECK_FOR_ERROR(err3);
     // 9 Создайте OpenCL-kernel в созданной подпрограмме (в одной подпрограмме может быть несколько кернелов, но в данном случае кернел один)
     // см. подходящую функцию в Runtime APIs -> Program Objects -> Kernel Objects
     cl_kernel kernel = clCreateKernel(prog, "aplusb", &err);
-    OCL_FREE_SAFE_CALL(err, 7 , &ctx, &qu, &buf1, &buf2, &buf3, &prog);
+    OCL_CHECK_FOR_ERROR(err);
 
     // 10 Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
@@ -313,5 +280,12 @@ int main() {
         }
     }
 
+    OCL_SAFE_CALL(clReleaseContext(ctx));
+    OCL_SAFE_CALL(clReleaseCommandQueue(qu));
+    OCL_SAFE_CALL(clReleaseMemObject(buf1));
+    OCL_SAFE_CALL(clReleaseMemObject(buf2));
+    OCL_SAFE_CALL(clReleaseMemObject(buf3));
+    OCL_SAFE_CALL(clReleaseProgram(prog));
+    OCL_SAFE_CALL(clReleaseKernel(kernel));
     return 0;
 }

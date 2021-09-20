@@ -19,9 +19,7 @@ __kernel void aplusb(__global float *as,__global float *bs,__global float *cs, u
   if (array_idx >= n) {
     return;
   }
-  for (unsigned int i = 0; i < n; ++i) {
     cs[array_idx] = as[array_idx] + bs[array_idx];
-  }
     // Узнать, какой workItem выполняется в этом потоке поможет функция get_global_id
     // см. в документации https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/
     // OpenCL Compiler -> Built-in Functions -> Work-Item Functions
