@@ -140,6 +140,7 @@ int main()
     // TODO 6 Выполните TODO 5 (реализуйте кернел в src/cl/aplusb.cl)
     // затем убедитесь, что выходит загрузить его с диска (убедитесь что Working directory выставлена правильно - см. описание задания),
     // напечатав исходники в консоль (if проверяет, что удалось считать хоть что-то)
+
     std::string kernel_sources;
     {
         std::ifstream file("src/cl/aplusb.cl");
@@ -147,7 +148,7 @@ int main()
         if (kernel_sources.size() == 0) {
             throw std::runtime_error("Empty source file! May be you forgot to configure working directory properly?");
         }
-        // std::cout << kernel_sources << std::endl;
+        // std::cout << kernel_sources << std::endl; // OK
     }
 
     // TODO 7 Создайте OpenCL-подпрограмму с исходниками кернела
