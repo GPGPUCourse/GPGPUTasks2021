@@ -43,6 +43,51 @@ int main()
     // TODO 1 По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
     // (если в списке устройств есть хоть одна видеокарта - выберите ее, если нету - выбирайте процессор)
 
+    cl_device_id chosen_device;
+    cl_device_type chosen_device_type;
+    cl_platform_id chosen_platform;
+    bool is_device_chosen = false;
+
+    cl_uint platformsCount = 0;
+    OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
+    std::vector<cl_platform_id> platforms(platformsCount);
+    OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        cl_platform_id platform = platforms[platformIndex];
+        cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
+        for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            cl_device_id device = devices[deviceIndex];
+            cl_device_type device_type;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 8, &device_type, nullptr));
+            if (!is_device_chosen || (chosen_device_type != CL_DEVICE_TYPE_GPU && device_type == CL_DEVICE_TYPE_GPU)) {
+                chosen_device = device;
+                chosen_device_type = device_type;
+                chosen_platform = platform;
+                is_device_chosen = true;
+            }
+        }
+    }
+
+    std::cout << "Using:" << std::endl;
+
+    size_t platformNameSize = 0;
+    OCL_SAFE_CALL(clGetPlatformInfo(chosen_platform, CL_PLATFORM_NAME, 0, nullptr, &platformNameSize));
+    std::vector<unsigned char> platformName(platformNameSize, 0);
+    OCL_SAFE_CALL(clGetPlatformInfo(chosen_platform, CL_PLATFORM_NAME, platformNameSize, platformName.data(), nullptr));
+    std::cout << "    Platform: " << platformName.data() << std::endl;
+
+    size_t deviceNameSize = 0;
+    OCL_SAFE_CALL(clGetDeviceInfo(chosen_device, CL_DEVICE_NAME, 0, nullptr, &deviceNameSize));
+    std::vector<unsigned char> deviceName(deviceNameSize, 0);
+    OCL_SAFE_CALL(clGetDeviceInfo(chosen_device, CL_DEVICE_NAME, deviceNameSize, deviceName.data(), nullptr));
+    std::cout << "    Device: " << deviceName.data() << std::endl;
+
+    bool is_gpu = chosen_device_type == CL_DEVICE_TYPE_GPU;
+    std::cout << "    Is GPU: " << (is_gpu ? "yes" : "no") << std::endl;
+
     // TODO 2 Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
     // Не забывайте проверять все возвращаемые коды на успешность (обратите внимание, что в данном случае метод возвращает
