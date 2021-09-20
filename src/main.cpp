@@ -91,7 +91,7 @@ int main()
     // код по переданному аргументом errcode_ret указателю)
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
     cl_int status;
-    auto context = clCreateContext(NULL, 1, &platform_device.second, NULL, NULL, &status);
+    auto context = clCreateContext(nullptr, 1, &platform_device.second, nullptr, nullptr, &status);
     OCL_SAFE_CALL(status);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
@@ -126,7 +126,7 @@ int main()
     cl_mem bsBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * n, bs.data(), &status);
     OCL_SAFE_CALL(status);
 
-    cl_mem csBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * n, NULL, &status);
+    cl_mem csBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float) * n, nullptr, &status);
     OCL_SAFE_CALL(status);
 
     // TODO 6 Выполните TODO 5 (реализуйте кернел в src/cl/aplusb.cl)
@@ -146,12 +146,12 @@ int main()
     // см. Runtime APIs -> Program Objects -> clCreateProgramWithSource
     // у string есть метод c_str(), но обратите внимание, что передать вам нужно указатель на указатель
     auto kernel_code = kernel_sources.c_str();
-    cl_program sub_program = clCreateProgramWithSource(context, 1, &kernel_code, NULL, &status);
+    cl_program sub_program = clCreateProgramWithSource(context, 1, &kernel_code, nullptr, &status);
     OCL_SAFE_CALL(status);
 
     // TODO 8 Теперь скомпилируйте программу и напечатайте в консоль лог компиляции
     // см. clBuildProgram
-    auto buildStatus = clBuildProgram(sub_program, 1, &platform_device.second, NULL, NULL, NULL);
+    auto buildStatus = clBuildProgram(sub_program, 1, &platform_device.second, nullptr, nullptr, nullptr);
     size_t log_size = 0;
     OCL_SAFE_CALL(clGetProgramBuildInfo(sub_program, platform_device.second, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size));
     if (log_size > 1) {
@@ -200,7 +200,7 @@ int main()
         timer t; // Это вспомогательный секундомер, он замеряет время своего создания и позволяет усреднять время нескольких замеров
         for (unsigned int i = 0; i < 20; ++i) {
             cl_event event;
-            OCL_SAFE_CALL(clEnqueueNDRangeKernel(q, kernel, 1, NULL, &global_work_size, &workGroupSize, 0, NULL, &event));
+            OCL_SAFE_CALL(clEnqueueNDRangeKernel(q, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
@@ -230,7 +230,7 @@ int main()
     {
         timer t;
         for (unsigned int i = 0; i < 20; ++i) {
-            OCL_SAFE_CALL(clEnqueueReadBuffer(q, csBuffer, true, 0, sizeof(float) * n, cs.data(), 0, NULL, NULL));
+            OCL_SAFE_CALL(clEnqueueReadBuffer(q, csBuffer, true, 0, sizeof(float) * n, cs.data(), 0, nullptr, nullptr));
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
