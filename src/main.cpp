@@ -94,6 +94,10 @@ int main()
     // код по переданному аргументом errcode_ret указателю)
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
 
+    cl_int ret_code;
+    cl_context context = clCreateContext(nullptr, 1, &chosen_device, nullptr, nullptr, &ret_code);
+    OCL_SAFE_CALL(ret_code);
+
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Runtime APIs -> Command Queues -> clCreateCommandQueue
     // Убедитесь, что в соответствии с документацией вы создали in-order очередь задач
@@ -217,6 +221,8 @@ int main()
 //            throw std::runtime_error("CPU and GPU results differ!");
 //        }
 //    }
+
+    OCL_SAFE_CALL(clReleaseContext(context));
 
     return 0;
 }
