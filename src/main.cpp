@@ -231,10 +231,12 @@ int main()
         }
     }
 
-    clReleaseContext(context);
-    clReleaseCommandQueue(queue);
-    clReleaseMemObject(asBuff);
-    clReleaseMemObject(bsBuff);
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
     clReleaseMemObject(csBuff);
+    clReleaseMemObject(bsBuff);
+    clReleaseMemObject(asBuff);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
     return 0;
 }
