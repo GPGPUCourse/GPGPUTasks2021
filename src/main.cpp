@@ -92,7 +92,7 @@ int main()
     cl_command_queue command_queue = clCreateCommandQueue(context, device, 0, &errcode_ret);
     OCL_SAFE_CALL(errcode_ret);
 
-    unsigned int n = 100*1000*1000;
+    unsigned int n = 1000*1000;
     // Создаем два массива псевдослучайных данных для сложения и массив для будущего хранения результата
     std::vector<float> as(n, 0);
     std::vector<float> bs(n, 0);
@@ -167,9 +167,9 @@ int main()
     // Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
         unsigned int i = 0;
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &as_gpu));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &bs_gpu));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &cs_gpu));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &as_gpu));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &bs_gpu));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &cs_gpu));
         OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(unsigned int), &n));
     }
 
