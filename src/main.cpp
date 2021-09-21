@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <fstream>
 #include <cassert>
+#include <iomanip>
 
 
 template <typename T>
@@ -145,7 +146,7 @@ int main()
 
     errcode = clBuildProgram(prog, 1, &device, nullptr, nullptr, nullptr);
     size_t log_size = 0;
-    OCL_SAFE_CALL(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, NULL,  nullptr, &log_size));
+    OCL_SAFE_CALL(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0,  nullptr, &log_size));
     std::vector<char> log(log_size, 0);
     OCL_SAFE_CALL(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), NULL));
     if (log_size > 1) {
