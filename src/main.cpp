@@ -34,6 +34,7 @@ void reportError(cl_int err, const std::string &filename, int line)
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
 cl_device_id deviceHelper(cl_uint platformsCount, const std::vector<cl_platform_id>& platforms) {
+    cl_device_id resultDeviceId = nullptr;
     for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
         cl_platform_id platform = platforms[platformIndex];
 
@@ -51,14 +52,58 @@ cl_device_id deviceHelper(cl_uint platformsCount, const std::vector<cl_platform_
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_TYPE, type_size, &device_type, nullptr));
 
             if (device_type == CL_DEVICE_TYPE_GPU)  {
-                return deviceId;
+                resultDeviceId = deviceId;
             }
         }
-        if (platformIndex == platformsCount - 1) {
-            return deviceId;
+        if (platformIndex == platformsCount - 1 && resultDeviceId == nullptr) {
+            resultDeviceId = deviceId;
         }
     }
-    return nullptr;
+    if (resultDeviceId != nullptr) {
+        std::cout << "Device Info:\n";
+        size_t name_size = 0;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_NAME, 0, nullptr, &name_size));
+        std::vector<unsigned char> device_name(name_size,0);
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_NAME, name_size, device_name.data(), nullptr));
+        std::cout << "Name: " << device_name.data() << std::endl;
+
+        size_t type_size = 0;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_TYPE, 0, nullptr, &type_size));
+        cl_device_type device_type;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_TYPE, type_size, &device_type, nullptr));
+        std::string strType;
+        if (device_type == CL_DEVICE_TYPE_CPU) {
+            strType = "CPU";
+        } else if (device_type == CL_DEVICE_TYPE_GPU)  {
+            strType = "GPU";
+        } else if (device_type == CL_DEVICE_TYPE_ACCELERATOR) {
+            strType = "Accelerator";
+        } else if (device_type == CL_DEVICE_TYPE_DEFAULT) {
+            strType = "Default";
+        } else if (device_type == CL_DEVICE_TYPE_ALL) {
+            strType = "All";
+        } else {
+            strType = "Unknown";
+        }
+        std::cout << "Type: " << strType << std::endl;
+
+        size_t mem_size_size = 0;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_GLOBAL_MEM_SIZE, 0, nullptr, &mem_size_size));
+        cl_uint mem_size;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_GLOBAL_MEM_SIZE, mem_size_size, &mem_size, nullptr));
+        std::cout << "Memory size: " << mem_size / (1024 * 1024.0) << std::endl;
+
+        size_t max_mem_size_size = 0;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_MAX_MEM_ALLOC_SIZE, 0, nullptr, &max_mem_size_size));
+        cl_uint max_mem_size;
+        OCL_SAFE_CALL(clGetDeviceInfo(resultDeviceId, CL_DEVICE_MAX_MEM_ALLOC_SIZE, max_mem_size_size, &max_mem_size, nullptr));
+        std::cout << "Max size of memory object allocation: " << max_mem_size / (1024 * 1024.0) << std::endl;
+
+    } else {
+        std::cout << "sorry no device\n";
+    }
+    std::cout << "\n";
+    return resultDeviceId;
 }
 
 int main()
@@ -135,9 +180,6 @@ int main()
         OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float*), &csBuff));
         OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(unsigned int), &n));
     }
-
-    // TODO 11 Выше увеличьте n с 1000*1000 до 100*1000*1000 (чтобы дальнейшие замеры были ближе к реальности)
-    // у меня CL_MEM_OBJECT_ALLOCATION_FAILURE так получается в 148 строчке :(
 
     {
         size_t workGroupSize = 128;
