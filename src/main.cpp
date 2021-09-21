@@ -66,25 +66,31 @@ int main()
     std::cout << "Number of OpenCL platforms: " << platformsCount << std::endl;
     std::vector<cl_platform_id> platforms(platformsCount);
     OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
-    cl_platform_id platform = platforms[0];
-    cl_uint devicesCount = 0;
-    OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
-    assert(devicesCount >= 1 && "Devices count should be greater than 0");
+    cl_device_id cpuDevice = nullptr;
+    cl_device_id gpuDevice = nullptr;
+    for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
+        cl_platform_id platform = platforms[platformIndex];
+        cl_uint devicesCount = 0;
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
+        assert(devicesCount >= 1 && "Devices count should be greater than 0");
 
-    std::vector<cl_device_id> devices(devicesCount);
-    OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
-    // try to find gpu
-    cl_device_id gpuDeviceInd = nullptr;
-    for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
-        cl_device_id device = devices[deviceIndex];
-        size_t devicePropertySize = 0;
-        OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 0, nullptr, &devicePropertySize));
-        cl_device_type deviceProperty;
-        OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, devicePropertySize, &deviceProperty, NULL));
-        if (deviceProperty == CL_DEVICE_TYPE_GPU)
-            gpuDeviceInd = device;
+        std::vector<cl_device_id> devices(devicesCount);
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount, devices.data(), nullptr));
+        // try to find gpu
+        for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            cl_device_id device = devices[deviceIndex];
+            size_t devicePropertySize = 0;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, 0, nullptr, &devicePropertySize));
+            cl_device_type deviceProperty;
+            OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, devicePropertySize, &deviceProperty, NULL));
+            if (deviceProperty == CL_DEVICE_TYPE_GPU)
+                gpuDevice = device;
+            else if (cpuDevice == nullptr && deviceProperty == CL_DEVICE_TYPE_CPU)
+                cpuDevice = device; // берем хоть какой-то цпу девайс на случай если не найдем гпу
+        }
+
     }
-    cl_device_id device = (gpuDeviceInd == nullptr) ? devices[0] : gpuDeviceInd;
+    cl_device_id device = (gpuDevice == nullptr) ? cpuDevice : gpuDevice;
     std::cout << "Choose device with name: " << getDeviceStrProperty(device, CL_DEVICE_NAME) << std::endl;
     // TODO 2 Создайте контекст с выбранным устройством
 
@@ -171,6 +177,7 @@ int main()
             cl_event event;
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(queue, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
 
@@ -178,13 +185,13 @@ int main()
 
         // TODO 13 Рассчитайте достигнутые гигафлопcы:
 
-        size_t gflops = n / (t.lapAvg() * 1e9);
-        std::cout << "GFlops: " << gflops << std::endl;
+        double gflops = n / (t.lapAvg() * 1e9);
+        std::cout << "GFlops: " << std::setprecision(3) << gflops << std::endl;
 
         // TODO 14 Рассчитайте используемую пропускную способность обращений к видеопамяти (в гигабайтах в секунду)
 
-        size_t vramBandwidth = 3 * n * sizeof(float) / ((1 << 30) * t.lapAvg());
-        std::cout << "VRAM bandwidth: " << vramBandwidth << " GB/s" << std::endl;
+        double vramBandwidth = 3 * n * sizeof(float) / ((1 << 30) * t.lapAvg());
+        std::cout << "VRAM bandwidth: " << std::setprecision(3) << vramBandwidth << " GB/s" << std::endl;
     }
 
     // TODO 15 Скачайте результаты вычислений из видеопамяти (VRAM) в оперативную память (RAM) - из cs_gpu в cs (и рассчитайте скорость трансфера данных в гигабайтах в секунду)
@@ -195,8 +202,8 @@ int main()
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        size_t ramToVramBandwidth = 3 * n * sizeof(float) / ((1 << 30) * t.lapAvg());
-        std::cout << "VRAM -> RAM bandwidth: " << ramToVramBandwidth << " GB/s" << std::endl;
+        double ramToVramBandwidth = 3 * n * sizeof(float) / ((1 << 30) * t.lapAvg());
+        std::cout << "VRAM -> RAM bandwidth: " << std::setprecision(3) << ramToVramBandwidth << " GB/s" << std::endl;
     }
 
     // TODO 16 Сверьте результаты вычислений со сложением чисел на процессоре (и убедитесь, что если в кернеле сделать намеренную ошибку, то эта проверка поймает ошибку)
