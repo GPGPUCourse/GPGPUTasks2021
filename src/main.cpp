@@ -202,6 +202,7 @@ int main()
             cl_event event;
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(q, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
@@ -223,7 +224,7 @@ int main()
         // - Обращений к видеопамяти 2*n*sizeof(float) байт на чтение и 1*n*sizeof(float) байт на запись, т.е. итого 3*n*sizeof(float) байт
         // - В гигабайте 1024*1024*1024 байт
         // - Среднее время выполнения кернела равно t.lapAvg() секунд
-        std::cout << "VRAM bandwidth: " << 3 * n * sizeof(float) / (1 << 30) << " GB/s" << std::endl;
+        std::cout << "VRAM bandwidth: " << (3 * n * sizeof(float) / t.lapAvg()) / (1 << 30) << " GB/s" << std::endl;
     }
 
     // TODO 15 Скачайте результаты вычислений из видеопамяти (VRAM) в оперативную память (RAM) - из cs_gpu в cs (и рассчитайте скорость трансфера данных в гигабайтах в секунду)
@@ -234,12 +235,13 @@ int main()
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "VRAM -> RAM bandwidth: " << n * sizeof(float) / (1 << 30) << " GB/s" << std::endl;
+        std::cout << "VRAM -> RAM bandwidth: " << (n * sizeof(float) / t.lapAvg()) / (1 << 30) << " GB/s" << std::endl;
     }
 
     // TODO 16 Сверьте результаты вычислений со сложением чисел на процессоре (и убедитесь, что если в кернеле сделать намеренную ошибку, то эта проверка поймает ошибку)
+    const auto eps = std::numeric_limits<float>::epsilon();
     for (unsigned int i = 0; i < n; ++i) {
-        if (cs[i] != as[i] + bs[i]) {
+        if (std::abs(cs[i] - (as[i] + bs[i])) > eps) {
             throw std::runtime_error("CPU and GPU results differ!");
         }
     }
