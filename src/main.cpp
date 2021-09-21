@@ -122,7 +122,7 @@ int main()
     OCL_SAFE_CALL(err);
     cl_mem bsBuff = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, buffSize, bs.data(), &err);
     OCL_SAFE_CALL(err);
-    cl_mem csBuff = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, buffSize, cs.data(), &err);
+    cl_mem csBuff = clCreateBuffer(context, CL_MEM_WRITE_ONLY, buffSize, nullptr, &err);
     OCL_SAFE_CALL(err);
 
 
@@ -194,9 +194,9 @@ int main()
         for (unsigned int i = 0; i < 20; ++i) {
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(commandQueue, kernel, 1, 0, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            clReleaseEvent(event);
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
-        clReleaseEvent(event);
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
         // подробнее об этом - см. timer.lapsFiltered
         // P.S. чтобы в CLion быстро перейти к символу (функции/классу/много чему еще), достаточно нажать Ctrl+Shift+Alt+N -> lapsFiltered -> Enter
