@@ -36,22 +36,23 @@ void reportError(cl_int err, const std::string &filename, int line)
 
 cl_device_id getDevice() {
     cl_uint platformsCount = 0;
-    cl_device_id deviceId = nullptr;
+    cl_device_id deviceId = 0;
     OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
     std::vector<cl_platform_id> platforms(platformsCount);
     
     for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
         cl_platform_id platform = platforms[platformIndex];
         cl_uint devicesCount = 0;
-        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &deviceId,
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr,
                                      &devicesCount));
+        OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount,
+                                     &deviceId, 0));
 
         for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
-            size_t retSize = 0;
             cl_device_type deviceType;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_TYPE,
                                           sizeof(cl_device_type), &deviceType,
-                                          &retSize));
+                                          nullptr));
             if (deviceType == CL_DEVICE_TYPE_GPU) {
                 return deviceId;
             }
@@ -170,10 +171,10 @@ int main()
     // TODO 10 Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
         unsigned int i = 0;
-        clSetKernelArg(kernel, i++, sizeof(cl_mem), &asBuff);
-        clSetKernelArg(kernel, i++, sizeof(cl_mem), &bsBuff);
-        clSetKernelArg(kernel, i++, sizeof(cl_mem), &csBuff);
-        clSetKernelArg(kernel, i++, sizeof(unsigned int), &n);
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &asBuff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &bsBuff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(cl_mem), &csBuff));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(unsigned int), &n));
     }
 
     // TODO 11 Выше увеличьте n с 1000*1000 до 100*1000*1000 (чтобы дальнейшие замеры были ближе к реальности)
@@ -195,6 +196,7 @@ int main()
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
+        clReleaseEvent(event);
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
         // подробнее об этом - см. timer.lapsFiltered
         // P.S. чтобы в CLion быстро перейти к символу (функции/классу/много чему еще), достаточно нажать Ctrl+Shift+Alt+N -> lapsFiltered -> Enter
@@ -240,14 +242,14 @@ int main()
        }
    }
 
-    clReleaseContext(context);
-    clReleaseCommandQueue(commandQueue);
+    OCL_SAFE_CALL(clReleaseContext(context));
+    OCL_SAFE_CALL(clReleaseCommandQueue(commandQueue));
 
-    clRetainMemObject(asBuff);
-    clReleaseMemObject(bsBuff);
-    clReleaseMemObject(csBuff);
+    OCL_SAFE_CALL(clRetainMemObject(asBuff));
+    OCL_SAFE_CALL(clReleaseMemObject(bsBuff));
+    OCL_SAFE_CALL(clReleaseMemObject(csBuff));
 
-    clReleaseProgram(program);
-    clReleaseKernel(kernel);
+    OCL_SAFE_CALL(clReleaseProgram(program));
+    OCL_SAFE_CALL(clReleaseKernel(kernel));
     return 0;
 }
