@@ -174,9 +174,13 @@ int main()
     // TODO 10 Выставите все аргументы в кернеле через clSetKernelArg (as_gpu, bs_gpu, cs_gpu и число значений, убедитесь, что тип количества элементов такой же в кернеле)
     {
         unsigned int i = 0;
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &aBuffer));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &bBuffer));
-        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(float) * n, &cBuffer));
+        size_t aBufferSize, bBufferSize, cBufferSize;
+        OCL_SAFE_CALL(clGetMemObjectInfo(aBuffer, CL_MEM_SIZE, sizeof(size_t), &aBufferSize, nullptr));
+        OCL_SAFE_CALL(clGetMemObjectInfo(aBuffer, CL_MEM_SIZE, sizeof(size_t), &bBufferSize, nullptr));
+        OCL_SAFE_CALL(clGetMemObjectInfo(aBuffer, CL_MEM_SIZE, sizeof(size_t), &cBufferSize, nullptr));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, aBufferSize, &aBuffer));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, bBufferSize, &bBuffer));
+        OCL_SAFE_CALL(clSetKernelArg(kernel, i++, cBufferSize, &cBuffer));
         OCL_SAFE_CALL(clSetKernelArg(kernel, i++, sizeof(int), &n));
     }
 
@@ -197,6 +201,7 @@ int main()
             cl_event event;
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(commandQueue, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
@@ -229,6 +234,7 @@ int main()
             cl_event event;
             OCL_SAFE_CALL(clEnqueueReadBuffer(commandQueue, cBuffer, CL_TRUE, 0, n * sizeof(float), cs.data(), 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap();
         }
         std::cout << "Result data transfer time: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
