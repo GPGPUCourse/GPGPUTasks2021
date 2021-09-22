@@ -38,17 +38,21 @@ cl_device_id getDevice() {
     cl_uint platformsCount = 0;
     cl_device_id deviceId = 0;
     OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
+    
     std::vector<cl_platform_id> platforms(platformsCount);
+    OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
     
     for (int platformIndex = 0; platformIndex < platformsCount; ++platformIndex) {
         cl_platform_id platform = platforms[platformIndex];
         cl_uint devicesCount = 0;
         OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr,
                                      &devicesCount));
+        std::vector<cl_device_id> devices(devicesCount);
         OCL_SAFE_CALL(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, devicesCount,
-                                     &deviceId, 0));
+                                     devices.data(), 0));
 
         for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+            deviceId = devices[deviceIndex];
             cl_device_type deviceType;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_TYPE,
                                           sizeof(cl_device_type), &deviceType,
