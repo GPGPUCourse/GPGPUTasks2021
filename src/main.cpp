@@ -31,40 +31,55 @@ void reportError(cl_int err, const std::string &filename, int line) {
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
+struct Device {
+    Device(cl_platform_id platformId, cl_device_id deviceId) : platformId(platformId), deviceId(deviceId) {}
+
+    Device() = default;
+
+    cl_platform_id platformId = nullptr;
+    cl_device_id deviceId = nullptr;
+};
+
 // Возвращает id платформы и девайсы
 // Если платформ нет, то кидает ошибку
 // Приоритет девайсов: GPU, CPU
-std::pair<cl_platform_id, cl_device_id> getPlatformAndDevice() {
+Device getPlatformAndDevice() {
     cl_uint platformsCount = 0;
     OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
     if (platformsCount == 0)
         throw std::runtime_error("No platform detected");
     std::vector<cl_platform_id> platforms(platformsCount);
     OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
-    std::pair<cl_platform_id, cl_device_id> cpu = {nullptr, nullptr};
+
     cl_uint cpuFreqMax = 0;
-    std::pair<cl_platform_id, cl_device_id> gpu = {nullptr, nullptr};
+    Device cpu;
+
     cl_uint gpuFreqMax = 0;
-    for (auto &platformId: platforms) {
+    Device gpu;
+
+    for (auto platformId: platforms) {
         cl_uint devicesCount = 0;
         OCL_SAFE_CALL(clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount));
         std::vector<cl_device_id> deviceIds(devicesCount);
         OCL_SAFE_CALL(clGetDeviceIDs(platformId, CL_DEVICE_TYPE_ALL, devicesCount, deviceIds.data(), nullptr));
-        for (auto &deviceId: deviceIds) {
+
+        for (auto deviceId: deviceIds) {
+
             cl_device_type deviceType = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_TYPE, sizeof(deviceType), &deviceType, nullptr));
             cl_uint freq = 0;
             OCL_SAFE_CALL(clGetDeviceInfo(deviceId, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(freq), &freq, nullptr));
+
             switch (deviceType) {
                 case CL_DEVICE_TYPE_CPU:
                     if (freq > cpuFreqMax) {
-                        cpu = {platformId, deviceId};
+                        cpu = Device(platformId, deviceId);
                         cpuFreqMax = freq;
                     }
                     break;
                 case CL_DEVICE_TYPE_GPU:
                     if (freq > gpuFreqMax) {
-                        gpu = {platformId, deviceId};
+                        gpu = Device(platformId, deviceId);
                         gpuFreqMax = freq;
                     }
                     break;
@@ -90,9 +105,8 @@ int main() {
 
     // TODO 1 По аналогии с предыдущим заданием узнайте, какие есть устройства, и выберите из них какое-нибудь
     // (если в списке устройств есть хоть одна видеокарта - выберите ее, если нету - выбирайте процессор)
-    auto platformDevicePair = getPlatformAndDevice();
-    auto platformId = platformDevicePair.first;
-    auto deviceId = platformDevicePair.second;
+    auto device = getPlatformAndDevice();
+    assert(device.platformId != nullptr && device.deviceId != nullptr);
 
     // TODO 2 Создайте контекст с выбранным устройством
     // См. документацию https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/ -> OpenCL Runtime -> Contexts -> clCreateContext
@@ -100,10 +114,10 @@ int main() {
     // код по переданному аргументом errcode_ret указателю)
     // И хорошо бы сразу добавить в конце clReleaseContext (да, не очень RAII, но это лишь пример)
     cl_context_properties contextProperties[] = {
-            CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platformId), 0
+            CL_CONTEXT_PLATFORM, (cl_context_properties) device.platformId, 0
     };
     auto *error = new cl_int;
-    auto context = clCreateContext(contextProperties, 1, &deviceId, nullptr, nullptr, error);
+    auto context = clCreateContext(contextProperties, 1, &device.deviceId, nullptr, nullptr, error);
     OCL_SAFE_CALL(*error);
 
     // TODO 3 Создайте очередь выполняемых команд в рамках выбранного контекста и устройства
@@ -111,7 +125,7 @@ int main() {
     // Убедитесь, что в соответствии с документацией вы создали in-order очередь задач
     // И хорошо бы сразу добавить в конце clReleaseQueue (не забывайте освобождать ресурсы)
     cl_command_queue_properties commandQueueProperties[] = {0};
-    auto queue = clCreateCommandQueue(context, deviceId, *commandQueueProperties, error);
+    auto queue = clCreateCommandQueue(context, device.deviceId, *commandQueueProperties, error);
     OCL_SAFE_CALL(*error);
 
     unsigned int n = 100 * 1000 * 1000;
@@ -167,14 +181,14 @@ int main() {
     // Обратите внимание, что при компиляции на процессоре через Intel OpenCL драйвер - в логе указывается, какой ширины векторизацию получилось выполнить для кернела
     // см. clGetProgramBuildInfo
     size_t log_size = 0;
-    OCL_SAFE_CALL(clGetProgramBuildInfo(program, deviceId, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size));
+    OCL_SAFE_CALL(clGetProgramBuildInfo(program, device.deviceId, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size));
     std::vector<char> log(log_size, 0);
-    OCL_SAFE_CALL(clGetProgramBuildInfo(program, deviceId, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr));
+    OCL_SAFE_CALL(clGetProgramBuildInfo(program, device.deviceId, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr));
     if (log_size > 1) {
         std::cout << "Log:" << std::endl;
         std::cout << log.data() << std::endl;
     }
-    OCL_SAFE_CALL(clBuildProgram(program, 1, &deviceId, "-w -Werror", nullptr, nullptr));
+    OCL_SAFE_CALL(clBuildProgram(program, 1, &device.deviceId, "-w -Werror", nullptr, nullptr));
 
     // TODO 9 Создайте OpenCL-kernel в созданной подпрограмме (в одной подпрограмме может быть несколько кернелов, но в данном случае кернел один)
     // см. подходящую функцию в Runtime APIs -> Program Objects -> Kernel Objects
@@ -203,12 +217,13 @@ int main() {
         size_t workGroupSize = 128;
         size_t global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
         timer t; // Это вспомогательный секундомер, он замеряет время своего создания и позволяет усреднять время нескольких замеров
+        cl_event event = nullptr;
         for (unsigned int i = 0; i < 20; ++i) {
-            auto event = new cl_event;
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(
-                    queue, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, event
+                    queue, kernel, 1, nullptr, &global_work_size, &workGroupSize, 0, nullptr, &event
             ));
-            OCL_SAFE_CALL(clWaitForEvents(1, event));
+            OCL_SAFE_CALL(clWaitForEvents(1, &event));
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
@@ -263,5 +278,6 @@ int main() {
     OCL_SAFE_CALL(clReleaseMemObject(csBuffer));
     OCL_SAFE_CALL(clReleaseCommandQueue(queue));
     OCL_SAFE_CALL(clReleaseContext(context));
+    delete (error);
     return 0;
 }
