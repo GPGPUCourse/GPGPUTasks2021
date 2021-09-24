@@ -1,0 +1,23 @@
+language: cpp
+dist: bionic
+compiler:
+  - gcc
+
+install:
+  - sudo apt update
+  - sudo apt install -y g++-5
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 90
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
+  - if [ $TRAVIS_OS_NAME = "linux" ]; then
+      sudo bash .travis/install_intel_opencl.sh;
+    fi;
+
+script:
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+  - make -j4
+  - ./aplusb
+  - ./mandelbrot
+  - ./sum
+  - ./max_prefix_sum
