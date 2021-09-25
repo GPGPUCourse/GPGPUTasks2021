@@ -198,7 +198,7 @@ int main()
         for (unsigned int i = 0; i < 20; ++i) {
             OCL_SAFE_CALL(clEnqueueNDRangeKernel(commandQueue, kernel, 1, 0, &global_work_size, &workGroupSize, 0, nullptr, &event));
             OCL_SAFE_CALL(clWaitForEvents(1, &event));
-            clReleaseEvent(event);
+            OCL_SAFE_CALL(clReleaseEvent(event));
             t.nextLap(); // При вызове nextLap секундомер запоминает текущий замер (текущий круг) и начинает замерять время следующего круга
         }
         // Среднее время круга (вычисления кернела) на самом деле считается не по всем замерам, а лишь с 20%-перцентайля по 80%-перцентайль (как и стандартное отклонение)
