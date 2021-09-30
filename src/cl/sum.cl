@@ -1,3 +1,4 @@
+#define WARP_SIZE 1 // for some reason it breaks with WARP_SIZE >= 4 on nvidia, idk why
 #define ITEMS_PER_WORK_GROUP_LOG 8
 #define ITEMS_PER_WORK_GROUP (1 << ITEMS_PER_WORK_GROUP_LOG)
 
@@ -12,13 +13,13 @@
 
 __kernel void sum(
     __global const unsigned *arr,
-    __global unsigned *results
+    __global unsigned *result
 ) {
     __local unsigned tmp[ITEMS_PER_WORK_GROUP];
     unsigned idx = get_local_id(0) + ITEMS_PER_WORK_GROUP * get_group_id(0);
 
     tmp[get_local_id(0)] = arr[idx] + arr[idx + STEP(0)];
-    barrier(CLK_GLOBAL_MEM_FENCE);
+    barrier(CLK_LOCAL_MEM_FENCE);
 
     ITERATION(1);
     ITERATION(2);
@@ -29,6 +30,6 @@ __kernel void sum(
     ITERATION(7);
     
     if (get_local_id(0) == 0) {
-        results[get_group_id(0)] = tmp[0];
+        atomic_add(result, tmp[0]);
     }
 }

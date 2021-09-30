@@ -66,7 +66,7 @@ int main(int argc, char **argv)
         context.init(device.device_id_opencl);
         context.activate();
 
-        gpu::gpu_mem_32u arr_gpu, results_gpu;
+        gpu::gpu_mem_32u arr_gpu, result_gpu;
         size_t work_group_size = 128;
         size_t n_gpu = gpu::divup(n, 2 * work_group_size) * 2 * work_group_size;
         size_t n_groups = n_gpu / work_group_size;
@@ -74,18 +74,16 @@ int main(int argc, char **argv)
 
         arr_gpu.resizeN(n_gpu);
         arr_gpu.writeN(as.data(), n_gpu);
-        results_gpu.resizeN(n_groups);
-
-        std::vector<unsigned> results(n_groups);
+        result_gpu.resizeN(1);
 
         ocl::Kernel sum(sum_kernel, sum_kernel_length, "sum");
 
         timer t_gpu;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
-            sum.exec(gpu::WorkSize(work_group_size, n_gpu / 2), arr_gpu, results_gpu);
-            results_gpu.readN(results.data(), n_groups);
             unsigned gpu_sum = 0;
-            for (unsigned i : results) gpu_sum += i;
+            result_gpu.writeN(&gpu_sum, 1);
+            sum.exec(gpu::WorkSize(work_group_size, n_gpu / 2), arr_gpu, result_gpu);
+            result_gpu.readN(&gpu_sum, 1);
             EXPECT_THE_SAME(reference_sum, gpu_sum, "GPU result should be consistent!");
             t_gpu.nextLap();
         }
