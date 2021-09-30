@@ -81,8 +81,9 @@ int main(int argc, char **argv)
 
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
+            unsigned int result = 0;
+            result_gpu.writeN(&result, 1);
             sum.exec(gpu::WorkSize(work_group_size, global_work_size), as_gpu, n, result_gpu);
-            unsigned int result;
             result_gpu.readN(&result, 1);
             EXPECT_THE_SAME(reference_sum, result, "GPU result should be consistent!");
             t.nextLap();
@@ -111,8 +112,9 @@ int main(int argc, char **argv)
 
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
+            unsigned int result = 0;
+            result_gpu.writeN(&result, 1);
             sum.exec(gpu::WorkSize(work_group_size, global_work_size), as_gpu, n, result_gpu);
-            unsigned int result;
             result_gpu.readN(&result, 1);
             EXPECT_THE_SAME(reference_sum, result, "GPU result should be consistent!");
             t.nextLap();

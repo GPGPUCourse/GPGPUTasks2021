@@ -13,10 +13,6 @@ __kernel void sum_baseline(__global const uint* arr, uint n, __global uint* resu
 
     __local uint local_arr[WG_SIZE];
 
-    if (g_ind == 0) {
-        atomic_and(result, 0);
-    }
-
     if (g_ind >= n)
         return;
 
@@ -38,10 +34,6 @@ __kernel void sum_tree(__global const uint* arr, uint n, __global uint* result)
     const uint l_ind = get_local_id(0);
 
     __local uint local_arr[WG_SIZE];
-
-    if (g_ind == 0) {
-        atomic_and(result, 0);
-    }
 
     if (g_ind >= n) {
         return;
