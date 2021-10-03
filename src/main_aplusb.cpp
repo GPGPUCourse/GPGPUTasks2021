@@ -37,7 +37,8 @@ int main(int argc, char **argv)
     gpu::Device device = gpu::chooseGPUDevice(argc, argv);
 
     // Этот контекст после активации будет прозрачно использоваться при всех вызовах в libgpu библиотеке
-    // это достигается использованием thread-local переменных, т.е. на самом деле контекст будет активирован для текущего потока исполнения
+    // это достигается использованием thread-local переменных, т.е. на самом деле контекст будет активирован для
+    // текущего потока исполнения
     gpu::Context context;
     context.init(device.device_id_opencl);
     context.activate();
@@ -61,14 +62,16 @@ int main(int argc, char **argv)
 
     // Прогружаем данные из векторов as и bs
     // (есть нетипизированный метод write для которого количество измеряется в байтах,
-    // и типизированный writeN, для которого количество измеряется в количестве float-элементов, т.к. gpu::gpu_mem_32f - это shared_device_buffer_typed<float>)
+    // и типизированный writeN, для которого количество измеряется в количестве float-элементов,
+    // т.к. gpu::gpu_mem_32f - это shared_device_buffer_typed<float>)
     as_gpu.writeN(as.data(), n);
     bs_gpu.writeN(bs.data(), n);
 
     // Исходники кернела написаны в src/cl/aplusb.cl
     // Но благодаря convertIntoHeader(src/cl/aplusb.cl src/cl/aplusb_cl.h aplusb_kernel) (см. CMakeLists.txt:18)
     // при компиляции автоматически появится файл src/cl/aplusb_cl.h с массивом aplusb_kernel состоящим из байт исходника
-    // т.о. программе не будет нужно в runtime читать файл с диска, т.к. исходник кернелов теперь хранится в массиве данных основной программы
+    // т.о. программе не будет нужно в runtime читать файл с диска, т.к. исходник к
+    // ернелов теперь хранится в массиве данных основной программы
     ocl::Kernel aplusb(aplusb_kernel, aplusb_kernel_length, "aplusb");
     aplusb.compile();
 
