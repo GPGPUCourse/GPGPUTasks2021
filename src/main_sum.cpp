@@ -78,7 +78,7 @@ int main(int argc, char **argv)
         bool printLog = false;
         sum.compile(printLog);
 
-        timer t_gpu;
+        timer t_gpu;         
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
             unsigned gpu_sum = 0;
             cs_gpu.writeN(&gpu_sum, 1);
