@@ -29,7 +29,10 @@ __kernel void sum_calculator(__global int* data, unsigned current_length) {
     }
 }
             
-__kernel void min_reductor(__global int* data, unsigned read_offset, unsigned write_offset) {
+__kernel void min_reductor(__global int* data, unsigned read_offset, unsigned write_offset, unsigned work_size) {
+    if (get_global_id(0) >= work_size) {
+        return;
+    }
     int a = data[read_offset + 2 * get_global_id(0)];
     int b = data[read_offset + 2 * get_global_id(0) + 1];
     data[write_offset + get_global_id(0)] = a > b ? a : b;

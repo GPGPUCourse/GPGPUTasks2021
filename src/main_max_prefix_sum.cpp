@@ -102,7 +102,7 @@ int main(int argc, char **argv)
             for (int iter = 0; iter < benchmarkingIters; ++iter) {
 
                 gpu::gpu_mem_32i buffer;
-                buffer.resizeN(xa.size() + 8); 
+                buffer.resizeN(xa.size()); 
                 buffer.writeN(xa.data(), xa.size()); 
 
                 unsigned current_reduction_size = static_cast<unsigned>(xa.size()) / 4;
@@ -116,14 +116,14 @@ int main(int argc, char **argv)
                     current_reduction_size /= 2;
                 }
                 
-                sum_calculator.exec(gpu::WorkSize(128, xa.size() / 2), buffer, static_cast<unsigned>(xa.size()) / 2);
+                sum_calculator.exec(gpu::WorkSize(work_group_size, xa.size() / 2), buffer, static_cast<unsigned>(xa.size()) / 2);
 
                 current_reduction_size = static_cast<unsigned>(xa.size()) / 4;
                 read_offset = 0;
                 write_offset = current_reduction_size * 2;
 
                 while (current_reduction_size) {
-                    min_reductor.exec(gpu::WorkSize(work_group_size, current_reduction_size), buffer, read_offset, write_offset);
+                    min_reductor.exec(gpu::WorkSize(work_group_size, current_reduction_size), buffer, read_offset, write_offset, current_reduction_size);
                     read_offset = write_offset;
                     write_offset += current_reduction_size;
                     current_reduction_size /= 2;
