@@ -140,8 +140,8 @@ int main(int argc, char **argv)
         size_t flopsInLoop = 10;
         size_t maxApproximateFlops = width * height * iterationsLimit * flopsInLoop;
         size_t gflops = 1000*1000*1000;
-        std::cout << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "CPU: " << maxApproximateFlops / gflops / t.lapAvg() << " GFlops" << std::endl;
+        std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
+        std::cout << "GPU: " << maxApproximateFlops / gflops / t.lapAvg() << " GFlops" << std::endl;
         results_vram.readN(gpu_results.ptr(), width * height);
 
         double realIterationsFraction = 0.0;

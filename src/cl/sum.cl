@@ -1,5 +1,5 @@
 
-__kernel void main(__global unsigned *input, unsigned n, __global unsigned *output) {
+__kernel void sum(__global unsigned *input, unsigned n, __global unsigned *output) {
     int local_id = get_local_id(0);
     int global_id = get_global_id(0);
 

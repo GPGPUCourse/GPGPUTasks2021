@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         gpu::Context context;
         context.init(device.device_id_opencl);
         context.activate();
-        ocl::Kernel kernel(sum_kernel, sum_kernel_length, "main");
+        ocl::Kernel kernel(sum_kernel, sum_kernel_length, "sum");
         kernel.compile(false);
 
         timer t;
