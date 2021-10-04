@@ -14,7 +14,7 @@ __kernel void sum(__global unsigned int* result, __global const unsigned int* as
     local_as[local_id] = as[get_global_id(0)];
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    for (size_t i = WORK_GROUP_SIZE; i > 0; i /= 2) {
+    for (size_t i = WORK_GROUP_SIZE / 2; i > 0; i /= 2) {
         if (i > local_id) {
             local_as[local_id] += local_as[local_id + i];
         }
