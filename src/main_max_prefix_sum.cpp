@@ -102,7 +102,7 @@ int main(int argc, char **argv)
             for (int iter = 0; iter < benchmarkingIters; ++iter) {
 
                 gpu::gpu_mem_32i buffer;
-                buffer.resizeN(xa.size() + 1); 
+                buffer.resizeN(xa.size() + 8); 
                 buffer.writeN(xa.data(), xa.size()); 
 
                 unsigned current_reduction_size = static_cast<unsigned>(xa.size()) / 4;
