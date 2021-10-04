@@ -91,7 +91,7 @@ int main(int argc, char **argv)
             sum_gpu.writeN(&sum, 1);
             kernel.exec(
                 gpu::WorkSize(WORK_GROUP_SIZE, n),
-                input, sum_gpu
+                input, sum_gpu, n
             );
             sum_gpu.readN(&sum, 1);
             EXPECT_THE_SAME(reference_sum, sum, "GPU OpenCL result should be consistent!");

@@ -6,13 +6,13 @@
 
 #define WORK_GROUP_SIZE 256
 
-__kernel void sum(__global const unsigned int* input, __global unsigned int* sum) {
+__kernel void sum(__global const unsigned int* input, __global unsigned int* sum, unsigned int n) {
 
     const unsigned int local_id = get_local_id(0);
     const unsigned int global_id = get_global_id(0);
 
     __local unsigned int buffer[WORK_GROUP_SIZE];
-    buffer[local_id] = input[global_id];
+    buffer[local_id] = global_id < n ? input[global_id] : 0;
 
     if (local_id == 0) {
         unsigned int local_sum = 0;
