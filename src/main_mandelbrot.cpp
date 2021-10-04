@@ -142,7 +142,7 @@ int main(int argc, char **argv)
                     width, height,
                     centralX - sizeX / 2.0f, centralY - sizeY / 2.0f,
                     sizeX, sizeY,
-                    iterationsLimit, false
+                    iterationsLimit, 0
                 );
                 t.nextLap();
             }
