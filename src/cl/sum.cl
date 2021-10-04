@@ -6,6 +6,7 @@
 
 #define WORK_GROUP_SIZE 256
 #define TREE_STOP_SIZE 128
+#define WARP_SIZE 1
 
 // Benchmarks on Intel(R) UHD Graphics 620 [0x5917] 12620Mb
 // Average on 1000 iterations
@@ -33,7 +34,9 @@ __kernel void sum(__global const unsigned int* input, __global unsigned int* sum
         if (local_id < workers) {
             buffer[local_id] += buffer[local_id + workers];
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
+        if (WARP_SIZE < workers) {
+            barrier(CLK_LOCAL_MEM_FENCE);
+        }
     }
 
     if (local_id == 0) {
