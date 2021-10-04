@@ -5,6 +5,7 @@
 #line 6
 
 #define WORK_GROUP_SIZE 256
+#define TREE_STOP_SIZE 64
 
 __kernel void sum(__global const unsigned int* input, __global unsigned int* sum, unsigned int n) {
 
@@ -15,7 +16,7 @@ __kernel void sum(__global const unsigned int* input, __global unsigned int* sum
     buffer[local_id] = global_id < n ? input[global_id] : 0;
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    for (int workers = WORK_GROUP_SIZE >> 1; workers > 0; workers = workers >> 1) {
+    for (int workers = WORK_GROUP_SIZE >> 1; workers >= TREE_STOP_SIZE; workers = workers >> 1) {
         if (local_id < workers) {
             buffer[local_id] += buffer[local_id + workers];
         }
@@ -23,6 +24,10 @@ __kernel void sum(__global const unsigned int* input, __global unsigned int* sum
     }
 
     if (local_id == 0) {
-        atomic_add(sum, buffer[0]);
+        unsigned int local_sum = 0;
+        for (int i=0; i < TREE_STOP_SIZE; ++i) {
+            local_sum += buffer[i];
+        }
+        atomic_add(sum, local_sum);
     }
 }
