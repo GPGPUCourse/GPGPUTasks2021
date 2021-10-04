@@ -14,6 +14,7 @@ __kernel void sum(__global const unsigned int* input, __global unsigned int* sum
     __local unsigned int buffer[WORK_GROUP_SIZE];
     buffer[local_id] = global_id < n ? input[global_id] : 0;
 
+    barrier(CLK_LOCAL_MEM_FENCE);
     if (local_id == 0) {
         unsigned int local_sum = 0;
         for (int i=0; i < WORK_GROUP_SIZE; ++i) {
