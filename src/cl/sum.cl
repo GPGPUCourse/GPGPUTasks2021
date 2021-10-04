@@ -5,7 +5,20 @@
 #line 6
 
 #define WORK_GROUP_SIZE 256
-#define TREE_STOP_SIZE 64
+#define TREE_STOP_SIZE 128
+
+// Benchmarks on Intel(R) UHD Graphics 620 [0x5917] 12620Mb
+// Average on 1000 iterations
+// 3437.78 - main sum thread
+// 1581.64 - full binary tree
+// 2059.83 - tree with 002-stop
+// 2283.96 - tree with 004-stop
+// 2602.50 - tree with 008-stop
+// 2824.53 - tree with 016-stop
+// 3337.03 - tree with 032-stop
+// 3759.41 - tree with 064-stop
+// 3934.66 - tree with 128-stop
+// 3565.83 - tree with 256-stop
 
 __kernel void sum(__global const unsigned int* input, __global unsigned int* sum, unsigned int n) {
 
