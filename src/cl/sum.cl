@@ -6,6 +6,8 @@
 
 #define WORK_GROUP_SIZE 256
 
+#define LOCAL_MEM_BARRIER(n) if (n > WARP_SIZE) barrier(CLK_LOCAL_MEM_FENCE)
+
 __kernel void sum(__global const unsigned int* xs,
                   __global       unsigned int* sum,
                   unsigned int n,
@@ -15,7 +17,7 @@ __kernel void sum(__global const unsigned int* xs,
     const unsigned int local_id = get_local_id(0);
     const unsigned int group_id = get_group_id(0);
 
-    __local unsigned int local_xs[WORK_GROUP_SIZE];
+    __local volatile unsigned int local_xs[WORK_GROUP_SIZE];
 
     if (global_id < n) {
         local_xs[local_id] = xs[global_id];
@@ -23,42 +25,42 @@ __kernel void sum(__global const unsigned int* xs,
         local_xs[local_id] = 0;
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(256);
     if (local_id < 128) {
         local_xs[local_id] += local_xs[local_id + 128];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(128);
     if (local_id < 64) {
         local_xs[local_id] += local_xs[local_id + 64];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(64);
     if (local_id < 32) {
         local_xs[local_id] += local_xs[local_id + 32];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(32);
     if (local_id < 16) {
         local_xs[local_id] += local_xs[local_id + 16];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(16);
     if (local_id < 8) {
         local_xs[local_id] += local_xs[local_id + 8];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(8);
     if (local_id < 4) {
         local_xs[local_id] += local_xs[local_id + 4];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(4);
     if (local_id < 2) {
         local_xs[local_id] += local_xs[local_id + 2];
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    LOCAL_MEM_BARRIER(2);
     if (local_id == 0) {
         local_xs[0] += local_xs[1];
         if (last_iteration) {
