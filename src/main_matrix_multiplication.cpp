@@ -11,6 +11,9 @@
 #include <stdexcept>
 
 
+#define DEBUG false
+
+
 int main(int argc, char **argv)
 {
     gpu::Device device = gpu::chooseGPUDevice(argc, argv);
@@ -19,10 +22,10 @@ int main(int argc, char **argv)
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 10; // TODO пока тестируетесь удобно выставить единицу
-    unsigned int M = 1024;
-    unsigned int K = 1024;
-    unsigned int N = 1024;
+    int benchmarkingIters = DEBUG ? 1 : 10; // TODO пока тестируетесь удобно выставить единицу
+    unsigned int M = DEBUG ? 128 : 1024;
+    unsigned int K = DEBUG ? 128 : 1024;
+    unsigned int N = DEBUG ? 128 : 1024;
     const size_t gflops = ((size_t) M * K * N * 2) / (1000 * 1000 * 1000); // умножить на два, т.к. операция сложения и умножения
 
     std::vector<float> as(M*K, 0);
@@ -30,11 +33,11 @@ int main(int argc, char **argv)
     std::vector<float> cs(M*N, 0);
 
     FastRandom r(M+K+N);
-    for (unsigned int i = 0; i < as.size(); ++i) {
-        as[i] = r.nextf();
+    for (float & a : as) {
+        a = r.nextf();
     }
-    for (unsigned int i = 0; i < bs.size(); ++i) {
-        bs[i] = r.nextf();
+    for (float & b : bs) {
+        b = r.nextf();
     }
     std::cout << "Data generated for M=" << M << ", K=" << K << ", N=" << N << "!" << std::endl;
 
@@ -45,9 +48,9 @@ int main(int argc, char **argv)
                 for (int i = 0; i < N; ++i) {
                     float sum = 0.0f;
                     for (int k = 0; k < K; ++k) {
-                        sum += as.data()[j * K + k] * bs.data()[k * N + i];
+                        sum += as[j * K + k] * bs[k * N + i];
                     }
-                    cs.data()[j * N + i] = sum;
+                    cs[j * N + i] = sum;
                 }
             }
             t.nextLap();
@@ -58,7 +61,6 @@ int main(int argc, char **argv)
 
     const std::vector<float> cs_cpu_reference = cs;
 
-    /*
     gpu::gpu_mem_32f as_gpu, bs_gpu, cs_gpu;
     as_gpu.resizeN(M*K);
     bs_gpu.resizeN(K*N);
@@ -73,11 +75,9 @@ int main(int argc, char **argv)
     {
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
-            // TODO
-            unsigned int work_group_size = 128;
-            unsigned int global_work_size = ...;
-            matrix_multiplication_kernel.exec(gpu::WorkSize(work_group_size, global_work_size), as_gpu, bs_gpu, cs_gpu, M, K, N);
-
+            unsigned int work_group_size = 16;
+            auto work_size = gpu::WorkSize(work_group_size, work_group_size, N, M);
+            matrix_multiplication_kernel.exec(work_size, as_gpu, bs_gpu, cs_gpu, M, K, N);
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
@@ -85,7 +85,6 @@ int main(int argc, char **argv)
     }
 
     cs_gpu.readN(cs.data(), M*N);
-    */
 
     // Проверяем корректность результатов
     double diff_sum = 0;
