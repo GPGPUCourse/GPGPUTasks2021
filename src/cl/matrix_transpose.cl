@@ -1,4 +1,5 @@
 #define WORK_TILE_SIZE 16
+#define WORK_TILE_SIZE_MOD 0b1111U
 
 __kernel void matrix_transpose(__global const float* inp, __global float* out, unsigned int nx, unsigned int ny)
 {
@@ -19,12 +20,16 @@ __kernel void matrix_transpose(__global const float* inp, __global float* out, u
     // Transpose in local memory
     __local float buffer[WORK_TILE_SIZE*WORK_TILE_SIZE];
 
+    // Cycle-shifted indexes
+    const unsigned int shifted_ly = (ly + lx) & WORK_TILE_SIZE_MOD;
+    const unsigned int shifted_lx = (lx + ly) & WORK_TILE_SIZE_MOD;
+
     // Phase 1: read + transpose
-    buffer[lx * WORK_TILE_SIZE + ly] = (gx < nx && gy < ny) ? inp[gy * nx + gx] : 0.f;
+    buffer[lx * WORK_TILE_SIZE + shifted_ly] = (gx < nx && gy < ny) ? inp[gy * nx + gx] : 0.f;
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // Phase 2: write to global memory
     if (tx < ny && ty < nx) {
-        out[ty * ny + tx] = buffer[ly * WORK_TILE_SIZE + lx];
+        out[ty * ny + tx] = buffer[ly * WORK_TILE_SIZE + shifted_lx];
     }
 }
