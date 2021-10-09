@@ -9,6 +9,11 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <iomanip>
+
+
+#define DEBUG false
+#define DISPLAY_COL_WIDTH 5
 
 
 int main(int argc, char **argv)
@@ -20,15 +25,21 @@ int main(int argc, char **argv)
     context.activate();
 
     int benchmarkingIters = 10;
-    unsigned int M = 1024; // number of rows
-    unsigned int K = 2048; // number of columns
+    unsigned int M = DEBUG ? 8 : 1024; // number of rows
+    unsigned int K = DEBUG ? 16 : 2048; // number of columns
 
     std::vector<float> as(M*K, 0);
     std::vector<float> as_t(K*M, 0);
 
-    FastRandom random(M+K);
-    for (float & a : as) {
-        a = random.nextf();
+    if (DEBUG) {
+        for (unsigned int i = 0; i < as.size(); ++i) {
+            as[i] = (float) i;
+        }
+    } else {
+        FastRandom random(M+K);
+        for (float & a : as) {
+            a = random.nextf();
+        }
     }
     std::cout << "Data generated for M=" << M << ", K=" << K << "!" << std::endl;
 
@@ -50,8 +61,8 @@ int main(int argc, char **argv)
             // поставьте каретку редактирования кода внутри скобок конструктора WorkSize -> Ctrl+P -> заметьте что есть 2, 4 и 6 параметров
             // - для 1D, 2D и 3D рабочего пространства соответственно
             unsigned int work_group_size = 16;
-            auto work_size = gpu::WorkSize(work_group_size, work_group_size, M, K);
-            matrix_transpose_kernel.exec(work_size, as_gpu, as_t_gpu, M, K);
+            auto work_size = gpu::WorkSize(work_group_size, work_group_size, K, M);
+            matrix_transpose_kernel.exec(work_size, as_gpu, as_t_gpu, K, M);
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
@@ -59,6 +70,28 @@ int main(int argc, char **argv)
     }
 
     as_t_gpu.readN(as_t.data(), K*M);
+
+    if (DEBUG) {
+
+        // Выводим вход
+        std::cout << "Input matrix" << std::endl;
+        for (int r = 0; r < M; ++r) {
+            for (int c = 0; c < K; ++c) {
+                std::cout << std::setw(DISPLAY_COL_WIDTH) << as[r * K + c] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        // Выводим выход
+        std::cout << "Output matrix" << std::endl;
+        for (int r = 0; r < K; ++r) {
+            for (int c = 0; c < M; ++c) {
+                std::cout << std::setw(DISPLAY_COL_WIDTH) << as_t[r * M + c] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+    }
 
     // Проверяем корректность результатов
     for (int j = 0; j < M; ++j) {
