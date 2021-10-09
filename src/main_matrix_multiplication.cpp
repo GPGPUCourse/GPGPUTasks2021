@@ -100,6 +100,10 @@ int main(int argc, char **argv)
 
     double diff_avg = diff_sum / (M * N);
     std::cout << "Average difference: " << diff_avg * 100.0 << "%" << std::endl;
-        std::cerr << "Too big difference!" << std::endl; // oops I broke something
+    if (diff_avg > 0.01) {
+        std::cerr << "Too big difference!" << std::endl;
         return 1;
+    }
+
+    return 0;
 }
