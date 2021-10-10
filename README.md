@@ -4,7 +4,7 @@
 
 # Задание 4. Транспонирование матрицы, умножение матриц.
 
-[![Build Status](https://app.travis-ci.com/GPGPUCourse/GPGPUTasks2021.svg?branch=task04)](https://app.travis-ci.com/GPGPUCourse/GPGPUTasks2021)
+[![Build Status](https://github.com/GPGPUCourse/GPGPUTasks2021/actions/workflows/cmake.yml/badge.svg?branch=task04&event=push)](https://github.com/GPGPUCourse/GPGPUTasks2021/actions/workflows/cmake.yml)
 
 0. Сделать fork проекта
 1. Выполнить задания 4.1 и 4.2 ниже
