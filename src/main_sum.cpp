@@ -1,6 +1,10 @@
 #include <libutils/misc.h>
 #include <libutils/timer.h>
 #include <libutils/fast_random.h>
+#include <libgpu/context.h>
+#include <libgpu/shared_device_buffer.h>
+
+#include "cl/sum_cl.h"
 
 
 template<typename T>
@@ -58,7 +62,37 @@ int main(int argc, char **argv)
     }
 
     {
-        // TODO: implement on OpenCL
-        // gpu::Device device = gpu::chooseGPUDevice(argc, argv);
+        gpu::Device device = gpu::chooseGPUDevice(argc, argv);
+        gpu::Context context;
+        context.init(device.device_id_opencl);
+        context.activate();
+
+        ocl::Kernel kernel(sum_kernel, sum_kernel_length, "sum");
+
+        const unsigned int groupSize = 128;
+        const unsigned int workSize = (n + groupSize - 1) / groupSize * groupSize;
+
+        gpu::gpu_mem_32u buff_as;
+        buff_as.resizeN(n);
+        buff_as.writeN(as.data(), n);
+
+        timer t;
+        for (int i = 0; i < benchmarkingIters; ++i) {
+            std::vector<unsigned int> res(1, 0);
+
+            gpu::gpu_mem_32u buff_res;
+            buff_res.resizeN(res.size());
+            buff_res.writeN(res.data(), res.size());
+
+            kernel.exec(gpu::WorkSize(groupSize, workSize),
+                        buff_as, n, buff_res);
+
+            buff_res.readN(res.data(), res.size());
+
+            EXPECT_THE_SAME(reference_sum, res.back(), "CPU OpenMP result should be consistent!");
+            t.nextLap();
+        }
+        std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
+        std::cout << "GPU: " << (n/1000.0/1000.0) / t.lapAvg() << " millions/s" << std::endl;
     }
 }
