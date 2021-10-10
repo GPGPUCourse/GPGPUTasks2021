@@ -1,4 +1,5 @@
 #define WORK_TILE_SIZE 16
+#define WORK_TILE_SIZE_MOD 0b1111U
 #define PRECISION double
 
 __kernel void matrix_multiplication(
@@ -26,12 +27,14 @@ __kernel void matrix_multiplication(
     // Iterating by tile pairs
     for (int tile_k = 0; tile_k * WORK_TILE_SIZE < sk; ++tile_k) {
         // Coalesced reading tiles
+        const unsigned int shifted_wb_lx = (lx + ly) & WORK_TILE_SIZE_MOD;
         a_tile[ly * WORK_TILE_SIZE + lx] = a_matrix[gy * sk + (tile_k * WORK_TILE_SIZE + lx)];
-        b_tile[ly * WORK_TILE_SIZE + lx] = b_matrix[(tile_k * WORK_TILE_SIZE + ly) * sn + gx];
+        b_tile[ly * WORK_TILE_SIZE + shifted_wb_lx] = b_matrix[(tile_k * WORK_TILE_SIZE + ly) * sn + gx];
         barrier(CLK_LOCAL_MEM_FENCE);
         // Update result accumulator
-        for (int elem = 0; elem < WORK_TILE_SIZE; ++elem) {
-            sum += (PRECISION) a_tile[ly * WORK_TILE_SIZE + elem] * (PRECISION) b_tile[elem * WORK_TILE_SIZE + lx];
+        for (int ind = 0; ind < WORK_TILE_SIZE; ++ind) {
+            const unsigned int shifted_rb_lx = (lx + ind) & WORK_TILE_SIZE_MOD;
+            sum += (PRECISION) a_tile[ly * WORK_TILE_SIZE + ind] * b_tile[ind * WORK_TILE_SIZE + shifted_rb_lx];
         }
     }
 
