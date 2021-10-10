@@ -1,4 +1,5 @@
 #define WORK_TILE_SIZE 16
+#define PRECISION double
 
 __kernel void matrix_multiplication(
         __global const float* a_matrix,
@@ -20,7 +21,7 @@ __kernel void matrix_multiplication(
     __local float b_tile[WORK_TILE_SIZE * WORK_TILE_SIZE];
 
     // Multiplication result for C[gy, gx]
-    float sum = 0.f;
+    PRECISION sum = 0.f;
 
     // Iterating by tile pairs
     for (int tile_k = 0; tile_k * WORK_TILE_SIZE < sk; ++tile_k) {
@@ -30,10 +31,10 @@ __kernel void matrix_multiplication(
         barrier(CLK_LOCAL_MEM_FENCE);
         // Update result accumulator
         for (int elem = 0; elem < WORK_TILE_SIZE; ++elem) {
-            sum += a_tile[ly * WORK_TILE_SIZE + elem] * b_tile[elem * WORK_TILE_SIZE + lx];
+            sum += (PRECISION) a_tile[ly * WORK_TILE_SIZE + elem] * (PRECISION) b_tile[elem * WORK_TILE_SIZE + lx];
         }
     }
 
     // Writting result to output
-    c_matrix[gy * sn + gx] = sum;
+    c_matrix[gy * sn + gx] = (float) sum;
 }
