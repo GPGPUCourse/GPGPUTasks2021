@@ -1,20 +1,19 @@
-#include <libutils/misc.h>
-#include <libutils/timer.h>
-#include <libutils/fast_random.h>
 #include <libgpu/context.h>
 #include <libgpu/shared_device_buffer.h>
+#include <libutils/fast_random.h>
+#include <libutils/misc.h>
+#include <libutils/timer.h>
 
 // Этот файл будет сгенерирован автоматически в момент сборки - см. convertIntoHeader в CMakeLists.txt:22
 #include "cl/aplusb_cl.h"
 
-#include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 
 template<typename T>
-void raiseFail(const T &a, const T &b, std::string message, std::string filename, int line)
-{
+void raiseFail(const T &a, const T &b, std::string message, std::string filename, int line) {
     if (a != b) {
         std::cerr << message << " But " << a << " != " << b << ", " << filename << ":" << line << std::endl;
         throw std::runtime_error(message);
@@ -24,8 +23,7 @@ void raiseFail(const T &a, const T &b, std::string message, std::string filename
 #define EXPECT_THE_SAME(a, b, message) raiseFail(a, b, message, __FILE__, __LINE__)
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     // Это пример использования библиотеки для решения предыдущего задания A+B
 
     // chooseGPUDevice:
@@ -42,7 +40,7 @@ int main(int argc, char **argv)
     context.init(device.device_id_opencl);
     context.activate();
 
-    unsigned int n = 50*1000*1000;
+    unsigned int n = 50 * 1000 * 1000;
     std::vector<float> as(n, 0);
     std::vector<float> bs(n, 0);
     std::vector<float> cs(n, 0);
@@ -74,8 +72,7 @@ int main(int argc, char **argv)
 
     unsigned int workGroupSize = 128;
     unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-    aplusb.exec(gpu::WorkSize(workGroupSize, global_work_size),
-                as_gpu, bs_gpu, cs_gpu, n);
+    aplusb.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, bs_gpu, cs_gpu, n);
 
     cs_gpu.readN(cs.data(), n);
 

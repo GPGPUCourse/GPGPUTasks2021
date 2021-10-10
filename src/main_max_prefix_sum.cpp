@@ -1,11 +1,10 @@
+#include <libutils/fast_random.h>
 #include <libutils/misc.h>
 #include <libutils/timer.h>
-#include <libutils/fast_random.h>
 
 
 template<typename T>
-void raiseFail(const T &a, const T &b, std::string message, std::string filename, int line)
-{
+void raiseFail(const T &a, const T &b, std::string message, std::string filename, int line) {
     if (a != b) {
         std::cerr << message << " But " << a << " != " << b << ", " << filename << ":" << line << std::endl;
         throw std::runtime_error(message);
@@ -15,8 +14,7 @@ void raiseFail(const T &a, const T &b, std::string message, std::string filename
 #define EXPECT_THE_SAME(a, b, message) raiseFail(a, b, message, __FILE__, __LINE__)
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int benchmarkingIters = 10;
     int max_n = (1 << 24);
 
@@ -47,7 +45,8 @@ int main(int argc, char **argv)
             reference_max_sum = max_sum;
             reference_result = result;
         }
-        std::cout << "Max prefix sum: " << reference_max_sum << " on prefix [0; " << reference_result << ")" << std::endl;
+        std::cout << "Max prefix sum: " << reference_max_sum << " on prefix [0; " << reference_result << ")"
+                  << std::endl;
 
         {
             timer t;

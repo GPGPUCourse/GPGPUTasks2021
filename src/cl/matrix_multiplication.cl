@@ -1,4 +1,3 @@
-__kernel void matrix_multiplication(...)
-{
+__kernel void matrix_multiplication(...) {
     // TODO
 }

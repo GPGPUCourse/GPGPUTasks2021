@@ -1,4 +1,3 @@
-__kernel void matrix_transpose(...)
-{
+__kernel void matrix_transpose(...) {
     // TODO
 }

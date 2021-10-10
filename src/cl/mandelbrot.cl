@@ -1,11 +1,10 @@
 #ifdef __CLION_IDE__
-#include <libgpu/opencl/cl/clion_defines.cl>
+    #include <libgpu/opencl/cl/clion_defines.cl>
 #endif
 
 #line 6
 
-__kernel void mandelbrot(...)
-{
+__kernel void mandelbrot(...) {
     // TODO если хочется избавиться от зернистости и дрожания при интерактивном погружении, добавьте anti-aliasing:
     // грубо говоря, при anti-aliasing уровня N вам нужно рассчитать не одно значение в центре пикселя, а N*N значений
     // в узлах регулярной решетки внутри пикселя, а затем посчитав среднее значение результатов - взять его за результат для всего пикселя

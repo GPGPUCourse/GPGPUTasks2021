@@ -1,18 +1,17 @@
-#include <libutils/misc.h>
-#include <libutils/timer.h>
-#include <libutils/fast_random.h>
 #include <libgpu/context.h>
 #include <libgpu/shared_device_buffer.h>
+#include <libutils/fast_random.h>
+#include <libutils/misc.h>
+#include <libutils/timer.h>
 
 #include "cl/matrix_transpose_cl.h"
 
-#include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     gpu::Device device = gpu::chooseGPUDevice(argc, argv);
 
     gpu::Context context;
@@ -23,10 +22,10 @@ int main(int argc, char **argv)
     unsigned int M = 1024;
     unsigned int K = 1024;
 
-    std::vector<float> as(M*K, 0);
-    std::vector<float> as_t(M*K, 0);
+    std::vector<float> as(M * K, 0);
+    std::vector<float> as_t(M * K, 0);
 
-    FastRandom r(M+K);
+    FastRandom r(M + K);
     for (unsigned int i = 0; i < as.size(); ++i) {
         as[i] = r.nextf();
     }
@@ -34,10 +33,10 @@ int main(int argc, char **argv)
 
     /*
     gpu::gpu_mem_32f as_gpu, as_t_gpu;
-    as_gpu.resizeN(M*K);
-    as_t_gpu.resizeN(K*M);
+    as_gpu.resizeN(M * K);
+    as_t_gpu.resizeN(K * M);
 
-    as_gpu.writeN(as.data(), M*K);
+    as_gpu.writeN(as.data(), M * K);
 
     ocl::Kernel matrix_transpose_kernel(matrix_transpose, matrix_transpose_length, "matrix_transpose");
     matrix_transpose_kernel.compile();
@@ -58,10 +57,10 @@ int main(int argc, char **argv)
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "GPU: " << M*K/1000.0/1000.0 / t.lapAvg() << " millions/s" << std::endl;
+        std::cout << "GPU: " << M * K / 1000.0 / 1000.0 / t.lapAvg() << " millions/s" << std::endl;
     }
 
-    as_t_gpu.readN(as_t.data(), M*K);
+    as_t_gpu.readN(as_t.data(), M * K);
 
     // Проверяем корректность результатов
     for (int j = 0; j < M; ++j) {
