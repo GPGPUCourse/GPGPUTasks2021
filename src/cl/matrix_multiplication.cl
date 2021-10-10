@@ -1,6 +1,6 @@
 #define WORK_TILE_SIZE 16
 #define WORK_TILE_SIZE_MOD 0b1111U
-#define PRECISION double
+#define PRECISION float
 
 __kernel void matrix_multiplication(
         __global const float* a_matrix,
@@ -40,6 +40,7 @@ __kernel void matrix_multiplication(
             const unsigned int shifted_rb_lx = (lx + ind) & WORK_TILE_SIZE_MOD;
             sum += (PRECISION) a_tile[ly * WORK_TILE_SIZE + ind] * b_tile[ind * WORK_TILE_SIZE + shifted_rb_lx];
         }
+        barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     // Writting result to output
