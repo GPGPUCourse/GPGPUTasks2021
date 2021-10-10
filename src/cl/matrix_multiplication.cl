@@ -28,8 +28,12 @@ __kernel void matrix_multiplication(
     for (int tile_k = 0; tile_k * WORK_TILE_SIZE < sk; ++tile_k) {
         // Coalesced reading tiles
         const unsigned int shifted_wb_lx = (lx + ly) & WORK_TILE_SIZE_MOD;
-        a_tile[ly * WORK_TILE_SIZE + lx] = a_matrix[gy * sk + (tile_k * WORK_TILE_SIZE + lx)];
-        b_tile[ly * WORK_TILE_SIZE + shifted_wb_lx] = b_matrix[(tile_k * WORK_TILE_SIZE + ly) * sn + gx];
+        const unsigned int ay = gy;
+        const unsigned int ax = tile_k * WORK_TILE_SIZE + lx;
+        const unsigned int by = tile_k * WORK_TILE_SIZE + ly;
+        const unsigned int bx = gx;
+        a_tile[ly * WORK_TILE_SIZE + lx] = (ay < sm && ax < sk) ? a_matrix[ay * sk + ax] : 0.f;
+        b_tile[ly * WORK_TILE_SIZE + shifted_wb_lx] = (by < sk && bx < sn) ? b_matrix[by * sn + bx] : 0.f;
         barrier(CLK_LOCAL_MEM_FENCE);
         // Update result accumulator
         for (int ind = 0; ind < WORK_TILE_SIZE; ++ind) {
@@ -39,5 +43,7 @@ __kernel void matrix_multiplication(
     }
 
     // Writting result to output
-    c_matrix[gy * sn + gx] = (float) sum;
+    if (gy < sm && gx < sn) {
+        c_matrix[gy * sn + gx] = (float) sum;
+    }
 }
