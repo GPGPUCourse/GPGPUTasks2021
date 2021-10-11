@@ -30,6 +30,8 @@ __kernel void matrix_multiplication(__global float *a, __global float *b, __glob
         for (int iter_sum = 0; iter_sum < TILE_SIZE; ++iter_sum) {
             sum += tileA[local_j][iter_sum] * tileB[iter_sum][local_i];
         }
+
+        barrier(CLK_LOCAL_MEM_FENCE);
     }
 
     c[j * N + i] = sum;
