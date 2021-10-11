@@ -19,10 +19,10 @@ __kernel void matrix_multiplication(__global float *as, __global float *bs, __gl
     
     for (int tileK = 0; tileK * TILE_SIZE < K; ++tileK) {
 
-        lc_as[lc_j][lc_i] = (tileK * TILE_SIZE + lc_i < K && j < M) ?
+        lc_as[lc_j][lc_i] = (tileK * TILE_SIZE + lc_i < K) ?
                                 as[j * K + (tileK * TILE_SIZE + lc_i)] : 0.0f;
 
-        lc_bs[lc_j][lc_i] = (lc_j + tileK * TILE_SIZE < K && i < N) ?
+        lc_bs[lc_j][lc_i] = (lc_j + tileK * TILE_SIZE < K) ?
                                 bs[(lc_j * N + tileK * TILE_SIZE * N) + i] : 0.0f;
 
         barrier(CLK_LOCAL_MEM_FENCE);
