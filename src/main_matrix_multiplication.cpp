@@ -19,10 +19,10 @@ int main(int argc, char **argv)
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 1; // TODO пока тестируетесь удобно выставить единицу
-    unsigned int M = 512;
-    unsigned int K = 512;
-    unsigned int N = 512;
+    int benchmarkingIters = 10; // TODO пока тестируетесь удобно выставить единицу
+    unsigned int M = 1024;
+    unsigned int K = 1024;
+    unsigned int N = 1024;
     const double  gflops = ((size_t) M * K * N * 2) / 1e9; // умножить на два, т.к. операция сложения и умножения
 
     std::vector<float> as(M*K, 0);
