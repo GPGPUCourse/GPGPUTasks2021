@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 1; // TODO пока тестируетесь удобно выставить единицу
+    int benchmarkingIters = 10; // TODO пока тестируетесь удобно выставить единицу
     unsigned size = 1027;
     unsigned int M = size;
     unsigned int K = size;
