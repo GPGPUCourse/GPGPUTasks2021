@@ -19,8 +19,8 @@ __kernel void matrix_multiplication(__global float * a, __global float * b, __gl
 
     float sum = 0.0;
     for (int tileK = 0; tileK * TILE_SIZE < K; tileK++) {
-        if (j < K && (tileK * TILE_SIZE + local_i < M))
-            tileA[local_j * TILE_SIZE][local_i] = a[j * K + (tileK * TILE_SIZE + local_i)];
+        if (j < M && (tileK * TILE_SIZE + local_i < K))
+            tileA[local_j * TILE_SIZE][local_i] = a[j * M + (tileK * TILE_SIZE + local_i)];
         else
             tileA[local_j * TILE_SIZE][local_i] = 0;
 
