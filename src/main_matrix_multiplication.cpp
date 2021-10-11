@@ -11,25 +11,25 @@
 #include <stdexcept>
 
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     gpu::Device device = gpu::chooseGPUDevice(argc, argv);
 
     gpu::Context context;
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 10; // TODO пока тестируетесь удобно выставить единицу
+    int benchmarkingIters = 1; // TODO пока тестируетесь удобно выставить единицу
     unsigned int M = 1024;
     unsigned int K = 1024;
     unsigned int N = 1024;
-    const size_t gflops = ((size_t) M * K * N * 2) / (1000 * 1000 * 1000); // умножить на два, т.к. операция сложения и умножения
+    const size_t gflops =
+            ((size_t) M * K * N * 2) / (1000 * 1000 * 1000); // умножить на два, т.к. операция сложения и умножения
 
-    std::vector<float> as(M*K, 0);
-    std::vector<float> bs(K*N, 0);
-    std::vector<float> cs(M*N, 0);
+    std::vector<float> as(M * K, 0);
+    std::vector<float> bs(K * N, 0);
+    std::vector<float> cs(M * N, 0);
 
-    FastRandom r(M+K+N);
+    FastRandom r(M + K + N);
     for (unsigned int i = 0; i < as.size(); ++i) {
         as[i] = r.nextf();
     }
@@ -58,25 +58,28 @@ int main(int argc, char **argv)
 
     const std::vector<float> cs_cpu_reference = cs;
 
-    /*
+
     gpu::gpu_mem_32f as_gpu, bs_gpu, cs_gpu;
-    as_gpu.resizeN(M*K);
-    bs_gpu.resizeN(K*N);
-    cs_gpu.resizeN(M*N);
+    as_gpu.resizeN(M * K);
+    bs_gpu.resizeN(K * N);
+    cs_gpu.resizeN(M * N);
 
-    as_gpu.writeN(as.data(), M*K);
-    bs_gpu.writeN(bs.data(), K*N);
+    as_gpu.writeN(as.data(), M * K);
+    bs_gpu.writeN(bs.data(), K * N);
 
-    ocl::Kernel matrix_multiplication_kernel(matrix_multiplication, matrix_multiplication_length, "matrix_multiplication");
+    ocl::Kernel matrix_multiplication_kernel(matrix_multiplication, matrix_multiplication_length,
+                                             "matrix_multiplication");
     matrix_multiplication_kernel.compile();
 
     {
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
-            // TODO
-            unsigned int work_group_size = 128;
-            unsigned int global_work_size = ...;
-            matrix_multiplication_kernel.exec(gpu::WorkSize(work_group_size, global_work_size), as_gpu, bs_gpu, cs_gpu, M, K, N);
+            unsigned int work_group_size = 16;
+            unsigned int global_work_size_X = M;
+            unsigned int global_work_size_Y = N;
+            matrix_multiplication_kernel.exec(
+                    gpu::WorkSize(work_group_size, work_group_size, global_work_size_X, global_work_size_Y), as_gpu,
+                    bs_gpu, cs_gpu, M, K, N);
 
             t.nextLap();
         }
@@ -84,8 +87,8 @@ int main(int argc, char **argv)
         std::cout << "GPU: " << gflops / t.lapAvg() << " GFlops" << std::endl;
     }
 
-    cs_gpu.readN(cs.data(), M*N);
-    */
+    cs_gpu.readN(cs.data(), M * N);
+
 
     // Проверяем корректность результатов
     double diff_sum = 0;
