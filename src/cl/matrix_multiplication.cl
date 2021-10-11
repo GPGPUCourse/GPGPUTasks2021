@@ -17,6 +17,9 @@ __kernel void matrix_multiplication(__global float * a, __global float * b, __gl
     __local float tileA[TILE_SIZE][TILE_SIZE];
     __local float tileB[TILE_SIZE][TILE_SIZE];
 
+    if (j >= M || i >= N)
+        return;
+
     float sum = 0.0;
     for (int tileK = 0; tileK * TILE_SIZE < K; tileK++) {
         if (j < M && (tileK * TILE_SIZE + local_i < K))
@@ -34,7 +37,7 @@ __kernel void matrix_multiplication(__global float * a, __global float * b, __gl
         for (int k = 0; k < TILE_SIZE; k++) {
             sum += tileA[local_j][k] * tileB[local_i][k];
         }
-
+        barrier(CLK_LOCAL_MEM_FENCE);
     }
     if (i < N && j < M) {
         c[j * N + i] = sum;
