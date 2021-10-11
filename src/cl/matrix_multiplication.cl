@@ -39,7 +39,7 @@ __kernel void matrix_multiplication(__global float * a, __global float * b, __gl
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
-    if (i < N && j < M) {
-        c[j * N + i] = sum;
-    }
+
+    c[j * N + i] = sum;
+
 }
