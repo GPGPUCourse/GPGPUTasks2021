@@ -12,7 +12,7 @@ __kernel void mandelbrot(__global float* gpuBuff,
 {
     const unsigned int i = get_global_id(0);
     const unsigned int j = get_global_id(1);
-
+    //test
     if(i > width || j > height) // вышли за предел картинки
         return;
 
