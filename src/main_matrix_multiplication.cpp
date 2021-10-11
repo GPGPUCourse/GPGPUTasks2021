@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 10; // TODO пока тестируетесь удобно выставить единицу
+    int benchmarkingIters = 1; // TODO пока тестируетесь удобно выставить единицу
     unsigned int M = 1024;
     unsigned int K = 1024;
     unsigned int N = 1024;
@@ -75,8 +75,8 @@ int main(int argc, char **argv) {
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
             unsigned int work_group_size = 16;
-            unsigned int global_work_size_X = M;
-            unsigned int global_work_size_Y = N;
+            unsigned int global_work_size_X = (M + work_group_size - 1) / work_group_size * work_group_size;
+            unsigned int global_work_size_Y = (N + work_group_size - 1) / work_group_size * work_group_size;
             matrix_multiplication_kernel.exec(
                     gpu::WorkSize(work_group_size, work_group_size, global_work_size_X, global_work_size_Y), as_gpu,
                     bs_gpu, cs_gpu, M, K, N);
