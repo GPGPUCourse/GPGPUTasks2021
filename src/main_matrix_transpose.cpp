@@ -41,7 +41,13 @@ int main(int argc, char **argv)
 
     auto device_info = ocl::DeviceInfo();
     device_info.init(device.device_id_opencl);
-    ocl::Kernel matrix_transpose_kernel(matrix_transpose, matrix_transpose_length, "matrix_transpose");
+    unsigned int work_group_size = 128;
+    if (device_info.warp_size == 0) {
+        device_info.warp_size = 1;
+        work_group_size = 1;
+    }
+
+    ocl::Kernel matrix_transpose_kernel(matrix_transpose, matrix_transpose_length, "matrix_transpose", "-DWS=" + to_string(device_info.warp_size));
 
     matrix_transpose_kernel.compile(true);
 
@@ -50,7 +56,6 @@ int main(int argc, char **argv)
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
             // TODO
-            unsigned int work_group_size = 128;
             unsigned int global_work_size = cols_num*rows_num;
             // Для этой задачи естественнее использовать двухмерный NDRange. Чтобы это сформулировать
             // в терминологии библиотеки - нужно вызвать другую вариацию конструктора WorkSize.
@@ -63,7 +68,7 @@ int main(int argc, char **argv)
             unsigned work_size_y = std::ceil(static_cast<double>(rows_num) / group_size_y);
 
             gpu::WorkSize work_size (group_size_x, group_size_y, work_size_x, work_size_y);
-            matrix_transpose_kernel.exec(work_size , as_gpu, as_t_gpu, cols_num, rows_num, work_group_size, global_work_size);
+            matrix_transpose_kernel.exec(work_size , as_gpu, as_t_gpu, cols_num, rows_num, work_group_size);
 
             t.nextLap();
         }

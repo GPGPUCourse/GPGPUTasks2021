@@ -1,5 +1,5 @@
-void zero_C(__local float C_mem[WARP_SIZE][WARP_SIZE], unsigned work_group_size) {
-    for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
+void zero_C(__local float C_mem[WS][WS], unsigned work_group_size) {
+    for (int i = 0; i != WS * WS / work_group_size; ++i) {
         unsigned C_mem_x = get_local_id(0);
         unsigned C_mem_y = get_local_id(1) + i * get_local_size(1);
 
@@ -7,13 +7,13 @@ void zero_C(__local float C_mem[WARP_SIZE][WARP_SIZE], unsigned work_group_size)
     }
 }
 
-void load_local(__global const float* A, __global const float* B, __local float A_mem[WARP_SIZE][WARP_SIZE], __local float B_mem[WARP_SIZE][WARP_SIZE], unsigned stage, unsigned work_group_size, unsigned M, unsigned K, unsigned N) {
-    for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
+void load_local(__global const float* A, __global const float* B, __local float A_mem[WS][WS], __local float B_mem[WS][WS], unsigned stage, unsigned work_group_size, unsigned M, unsigned K, unsigned N) {
+    for (int i = 0; i != WS * WS / work_group_size; ++i) {
         unsigned A_mem_x = get_local_id(0);
         unsigned A_mem_y = get_local_id(1) + i * get_local_size(1);
 
-        unsigned A_in_x = get_local_id(0) + stage * WARP_SIZE;
-        unsigned A_in_y = get_group_id(1) * WARP_SIZE + get_local_id(1) + i * get_local_size(1);
+        unsigned A_in_x = get_local_id(0) + stage * WS;
+        unsigned A_in_y = get_group_id(1) * WS + get_local_id(1) + i * get_local_size(1);
 
         unsigned A_source_index = A_in_x + A_in_y * K; 
         if (A_in_x < K && A_in_y < M) {
@@ -26,7 +26,7 @@ void load_local(__global const float* A, __global const float* B, __local float 
         unsigned B_mem_y = get_local_id(1) + i * get_local_size(1);
 
         unsigned B_in_x = get_global_id(0);
-        unsigned B_in_y = get_local_id(1) + stage * WARP_SIZE + i * get_local_size(1);
+        unsigned B_in_y = get_local_id(1) + stage * WS + i * get_local_size(1);
 
         unsigned B_source_index = B_in_x + B_in_y * N; 
 
@@ -38,15 +38,15 @@ void load_local(__global const float* A, __global const float* B, __local float 
     }
 }
 
-void multiply(__global const float* A, __global const float* B, __global float* C, __local float A_mem[WARP_SIZE][WARP_SIZE], __local float B_mem[WARP_SIZE][WARP_SIZE], __local float C_mem[WARP_SIZE][WARP_SIZE], unsigned M, unsigned K, unsigned N, unsigned work_group_size) {
-    for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
+void multiply(__global const float* A, __global const float* B, __global float* C, __local float A_mem[WS][WS], __local float B_mem[WS][WS], __local float C_mem[WS][WS], unsigned M, unsigned K, unsigned N, unsigned work_group_size) {
+    for (int i = 0; i != WS * WS / work_group_size; ++i) {
         unsigned C_mem_x = get_local_id(0);
         unsigned C_mem_y = get_local_id(1) + i * get_local_size(1);
 
         unsigned A_mem_y = C_mem_y;
         unsigned B_mem_x = C_mem_x;
 
-        for (int j = 0; j != WARP_SIZE; ++j) {
+        for (int j = 0; j != WS; ++j) {
             unsigned A_mem_x = j;
 
             unsigned B_mem_y = j;
@@ -56,13 +56,13 @@ void multiply(__global const float* A, __global const float* B, __global float* 
     }
 }
     
-void store_local(__global float* C, __local float C_mem[WARP_SIZE][WARP_SIZE], unsigned M, unsigned N, unsigned work_group_size) {
-    for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
+void store_local(__global float* C, __local float C_mem[WS][WS], unsigned M, unsigned N, unsigned work_group_size) {
+    for (int i = 0; i != WS * WS / work_group_size; ++i) {
         unsigned C_mem_x = get_local_id(0);
         unsigned C_mem_y = get_local_id(1) + i * get_local_size(1);
 
         unsigned C_out_x = get_global_id(0);
-        unsigned C_out_y = get_group_id(1) * WARP_SIZE + get_local_id(1) + i * get_local_size(1);
+        unsigned C_out_y = get_group_id(1) * WS + get_local_id(1) + i * get_local_size(1);
 
         unsigned C_store_index = C_out_x + C_out_y * N;
 
@@ -75,12 +75,12 @@ void store_local(__global float* C, __local float C_mem[WARP_SIZE][WARP_SIZE], u
 
 __kernel void matrix_multiplication(__global const float* A, __global const float* B, __global float* C, unsigned M, unsigned K, unsigned N, unsigned work_group_size) 
 {
-    __local float A_mem[WARP_SIZE][WARP_SIZE];
-    __local float B_mem[WARP_SIZE][WARP_SIZE];
-    __local float C_mem[WARP_SIZE][WARP_SIZE];
+    __local float A_mem[WS][WS];
+    __local float B_mem[WS][WS];
+    __local float C_mem[WS][WS];
 
 
-    unsigned total_stages = K / WARP_SIZE + (K % WARP_SIZE ? 1 : 0);
+    unsigned total_stages = K / WS + (K % WS ? 1 : 0);
 
     for (int stage = 0; stage != total_stages; ++stage) {
         zero_C(C_mem, work_group_size);
