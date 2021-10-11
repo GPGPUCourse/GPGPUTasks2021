@@ -55,6 +55,7 @@ int main(int argc, char **argv)
 
     // Создаем три буфера в видеопамяти
     gpu::gpu_mem_32f as_gpu, bs_gpu, cs_gpu;
+
     as_gpu.resizeN(n);
     bs_gpu.resizeN(n);
     cs_gpu.resizeN(n);

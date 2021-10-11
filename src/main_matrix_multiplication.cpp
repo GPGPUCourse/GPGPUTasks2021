@@ -5,6 +5,7 @@
 #include <libgpu/shared_device_buffer.h>
 
 #include "cl/matrix_multiplication_cl.h"
+#include "cl/matrix_transpose_cl.h"
 
 #include <vector>
 #include <iostream>
@@ -36,6 +37,10 @@ int main(int argc, char **argv)
     for (unsigned int i = 0; i < bs.size(); ++i) {
         bs[i] = r.nextf();
     }
+
+//    as[0 * M + 1] = 1.0;
+//    bs[1 * K + 0] = 1.0;
+
     std::cout << "Data generated for M=" << M << ", K=" << K << ", N=" << N << "!" << std::endl;
 
     {
@@ -58,10 +63,11 @@ int main(int argc, char **argv)
 
     const std::vector<float> cs_cpu_reference = cs;
 
-    /*
-    gpu::gpu_mem_32f as_gpu, bs_gpu, cs_gpu;
+
+    gpu::gpu_mem_32f as_gpu, bs_gpu, bs_t_gpu, cs_gpu;
     as_gpu.resizeN(M*K);
     bs_gpu.resizeN(K*N);
+    bs_t_gpu.resizeN(N * K);
     cs_gpu.resizeN(M*N);
 
     as_gpu.writeN(as.data(), M*K);
@@ -70,13 +76,33 @@ int main(int argc, char **argv)
     ocl::Kernel matrix_multiplication_kernel(matrix_multiplication, matrix_multiplication_length, "matrix_multiplication");
     matrix_multiplication_kernel.compile();
 
+    ocl::Kernel matrix_transpose_kernel(matrix_transpose, matrix_transpose_length, "matrix_transpose");
+    matrix_transpose_kernel.compile();
+
+
     {
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
-            // TODO
-            unsigned int work_group_size = 128;
-            unsigned int global_work_size = ...;
-            matrix_multiplication_kernel.exec(gpu::WorkSize(work_group_size, global_work_size), as_gpu, bs_gpu, cs_gpu, M, K, N);
+
+            {
+                unsigned int width = K;
+                unsigned int height = N;
+                unsigned int work_group_sizeX = 16;
+                unsigned int work_group_sizeY = 16;
+                unsigned int global_work_sizeX = (width + work_group_sizeX - 1) / work_group_sizeX * work_group_sizeX;
+                unsigned int global_work_sizeY = (height + work_group_sizeY - 1) / work_group_sizeY * work_group_sizeY;
+
+                matrix_transpose_kernel.exec(gpu::WorkSize(work_group_sizeX, work_group_sizeY, global_work_sizeX, global_work_sizeY), bs_gpu, bs_t_gpu, K, N);
+
+            }
+
+            unsigned int width = M;
+            unsigned int height = N;
+            unsigned int work_group_sizeX = 16;
+            unsigned int work_group_sizeY = 16;
+            unsigned int global_work_sizeX = (width + work_group_sizeX - 1) / work_group_sizeX * work_group_sizeX;
+            unsigned int global_work_sizeY = (height + work_group_sizeY - 1) / work_group_sizeY * work_group_sizeY;
+            matrix_multiplication_kernel.exec(gpu::WorkSize(work_group_sizeX, work_group_sizeY, global_work_sizeX, global_work_sizeY), as_gpu, bs_t_gpu, cs_gpu, M, K, N);
 
             t.nextLap();
         }
@@ -85,7 +111,20 @@ int main(int argc, char **argv)
     }
 
     cs_gpu.readN(cs.data(), M*N);
-    */
+
+//    for (int i = 0; i < 5; i++) {
+//        for (int j = 0; j < 5; j++) {
+//            std::cout << cs_cpu_reference[i * 64 + j] << " ";
+//        }
+//        std::cout << "\n";
+//    }
+//
+//    for (int i = 0; i < 5; i++) {
+//        for (int j = 0; j < 5; j++) {
+//            std::cout << cs[i * 64 + j] << " ";
+//        }
+//        std::cout << "\n";
+//    }
 
     // Проверяем корректность результатов
     double diff_sum = 0;
