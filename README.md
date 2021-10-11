@@ -1,5 +1,5 @@
 В этом репозитории предложены задания для [курса по вычислениям на видеокартах в CSC](https://compscicenter.ru/courses/video_cards_computation/2021-autumn/).
-
+ 
 [Остальные задания](https://github.com/GPGPUCourse/GPGPUTasks2021/).
 
 # Задание 3. Фрактал Мандельброта. Сумма чисел. Максимальный по сумме префикс.
