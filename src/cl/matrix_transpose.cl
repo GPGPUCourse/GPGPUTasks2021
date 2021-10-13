@@ -14,14 +14,12 @@ __kernel void matrix_transpose(__global float *as, __global float *as_t,
     int i = get_global_id(0);
     int j = get_global_id(1);
 
-    if (i >= K || j >= M) 
-        return;
-
     int lc_i = get_local_id(0);
     int lc_j = get_local_id(1);
 
     const int pow4 = (1 << 4) - 1;
-    lc_as[lc_j][(lc_i + lc_j) & pow4] = as[i + j * K];
+    if (i < K && j < M) 
+        lc_as[lc_j][(lc_i + lc_j) & pow4] = as[i + j * K];
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
