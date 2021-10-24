@@ -58,6 +58,9 @@ int main(int argc, char **argv) {
         ocl::Kernel bitonic(bitonic_kernel, bitonic_kernel_length, "bitonic");
         bitonic.compile();
 
+        ocl::Kernel bitonic_local(bitonic_kernel, bitonic_kernel_length, "bitonic_local");
+        bitonic_local.compile();
+
         unsigned int workGroupSize = 128;
         unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize / 2;
 
@@ -68,9 +71,11 @@ int main(int argc, char **argv) {
             t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфер данных
 
             for (unsigned block_number = 0; (1 << block_number) != n; ++block_number) {
-                for (int op_number = block_number; op_number > -1; --op_number) {
+                int op_number = block_number;
+                for (; op_number > 7; --op_number) {
                     bitonic.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n, block_number, static_cast<unsigned>(op_number));
                 }
+                bitonic_local.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n, block_number, op_number);
             }
             t.nextLap();
         }
@@ -79,7 +84,6 @@ int main(int argc, char **argv) {
 
         as_gpu.readN(as.data(), n);
     }
-
 
     // Проверяем корректность результатов
     for (int i = 0; i < n; ++i) {
