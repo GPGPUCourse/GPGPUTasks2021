@@ -4,7 +4,7 @@ add_subdirectory(libs)
 
 project(task5)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # OpenMP позволит распараллеливать циклы на все ядра процессора простыми директивами
 
