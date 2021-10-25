@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 add_subdirectory(libs)
 
-project(task4)
+project(task5)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # OpenMP позволит распараллеливать циклы на все ядра процессора простыми директивами
 
@@ -23,10 +23,10 @@ convertIntoHeader(src/cl/aplusb.cl src/cl/aplusb_cl.h aplusb_kernel)
 add_executable(aplusb src/main_aplusb.cpp src/cl/aplusb_cl.h)
 target_link_libraries(aplusb libclew libgpu libutils)
 
-convertIntoHeader(src/cl/matrix_transpose.cl src/cl/matrix_transpose_cl.h matrix_transpose)
-add_executable(matrix_transpose src/main_matrix_transpose.cpp src/cl/matrix_transpose_cl.h)
-target_link_libraries(matrix_transpose libclew libgpu libutils)
+convertIntoHeader(src/cl/bitonic.cl src/cl/bitonic_cl.h bitonic_kernel)
+add_executable(bitonic src/main_bitonic.cpp src/cl/bitonic_cl.h)
+target_link_libraries(bitonic libclew libgpu libutils)
 
-convertIntoHeader(src/cl/matrix_multiplication.cl src/cl/matrix_multiplication_cl.h matrix_multiplication)
-add_executable(matrix_multiplication src/main_matrix_multiplication.cpp src/cl/matrix_multiplication_cl.h)
-target_link_libraries(matrix_multiplication libclew libgpu libutils)
+convertIntoHeader(src/cl/radix.cl src/cl/radix_cl.h radix_kernel)
+add_executable(radix src/main_radix.cpp src/cl/radix_cl.h)
+target_link_libraries(radix libclew libgpu libutils)

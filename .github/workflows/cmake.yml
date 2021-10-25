@@ -15,9 +15,9 @@ jobs:
     - name: Install prerequisites
       run: |
         sudo apt update
-        sudo apt install -y g++-5
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 90
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
+        sudo apt install -y g++-8
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 90
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 90
 
     - name: Install OpenCL driver for CPU
       run: sudo bash .github/scripts/install_intel_opencl.sh;
@@ -32,10 +32,10 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ./aplusb
 
-    - name: matrix_transpose
+    - name: bitonic
       working-directory: ${{github.workspace}}/build
-      run: ./matrix_transpose
+      run: ./bitonic
 
-    - name: matrix_multiplication
+    - name: radix
       working-directory: ${{github.workspace}}/build
-      run: ./matrix_multiplication
+      run: ./radix
