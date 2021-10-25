@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 10;
+    int benchmarkingIters = 1;
     unsigned int n = 32 * 1024 * 1024;
     std::vector<float> as(n, 0);
     FastRandom r(n);
@@ -50,13 +50,16 @@ int main(int argc, char **argv) {
         std::cout << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
         std::cout << "CPU: " << (n / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
     }
-    /*
+
     gpu::gpu_mem_32f as_gpu;
     as_gpu.resizeN(n);
 
     {
-        ocl::Kernel bitonic(bitonic_kernel, bitonic_kernel_length, "bitonic");
-        bitonic.compile();
+        ocl::Kernel bitonic_start(bitonic_kernel, bitonic_kernel_length, "bitonic_start");
+        ocl::Kernel bitonic_end(bitonic_kernel, bitonic_kernel_length, "bitonic_end");
+        
+        bitonic_start.compile();
+        bitonic_end.compile();
 
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
@@ -66,7 +69,13 @@ int main(int argc, char **argv) {
 
             unsigned int workGroupSize = 128;
             unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-            bitonic.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n);
+            for (int step_in = 1, step_out = 2; step_in < n; step_in = step_out, step_out *= 2) {
+                while (step_in >= workGroupSize) {
+                    bitonic_start.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n, step_in, step_out);
+                    step_in /= 2;
+                }
+                bitonic_end.exec(gpu::WorkSize(workGroupSize, n), as_gpu, n, step_in, step_out);
+            }
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
@@ -79,6 +88,6 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n; ++i) {
         EXPECT_THE_SAME(as[i], cpu_sorted[i], "GPU results should be equal to CPU results!");
     }
-*/
+
     return 0;
 }
