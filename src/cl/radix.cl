@@ -5,6 +5,7 @@ __kernel void calc_c_init(__global unsigned int *as, __global unsigned *cs, unsi
     if (get_local_id(0) < (1 << k)) { 
         local_cs[get_local_id(0)] = 0;
     }
+    barrier(CLK_LOCAL_MEM_FENCE);
 
     unsigned mask = ((0xffffffff << (32 - k)) >> (32 - k)) << (stage * k);
     unsigned curr_val = (as[get_global_id(0)] & mask) >> (k * stage);
@@ -56,7 +57,6 @@ __kernel void matrix_transpose(__global unsigned* data, __global unsigned* outpu
         unsigned output_index = out_x + out_y * h; 
         if (out_x < h && out_y < w) {
             output[output_index] = mem[mem_x][mem_y];
-        printf("%d: %d ", i, output_index); 
         }
     }
 }
@@ -121,9 +121,6 @@ __kernel void radix(__global const unsigned *as, __global const unsigned* o, __g
     unsigned local_offset = get_local_id(0);
     for (unsigned i = 0; i != curr_val; ++i) {
         local_offset -= cs[get_group_id(0) * (1 << k) + i];
-    }
-    if (value == 1024) {
-        printf("A %d \n", get_global_id(0));
     }
     res[global_offset + local_offset] = value;
 }
