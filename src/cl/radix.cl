@@ -1,5 +1,3 @@
-#define k 2
-
 __kernel void calc_c_init(__global unsigned int *as, __global unsigned *cs, unsigned n, unsigned stage) {
     __local unsigned local_cs[1 << k];
     if (get_local_id(0) < (1 << k)) { 

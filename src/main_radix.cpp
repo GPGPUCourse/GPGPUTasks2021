@@ -12,6 +12,7 @@
 #include <array>
 #include <vector>
 #include <iterator>
+#include <iomanip>
 
 
 template<typename T>
@@ -61,14 +62,14 @@ int main(int argc, char **argv) {
             std::sort(cpu_sorted.begin(), cpu_sorted.end());
             t.nextLap();
         }
-        std::cout << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "CPU: " << (static_cast<double>(n) / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
+        std::cout << std::string(2, ' ') << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
+        std::cout << std::string(2, ' ') << "CPU: " << (static_cast<double>(n) / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
     }
     std::array<gpu::gpu_mem_32u, 2> buffers;
     buffers[0].resizeN(n);
     buffers[1].resizeN(n);
 
-    unsigned int workGroupSize = 128;
+    unsigned int workGroupSize = 256;
 
     auto device_info = ocl::DeviceInfo();
     device_info.init(device.device_id_opencl);
@@ -78,71 +79,74 @@ int main(int argc, char **argv) {
     }
 
     const unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-    const unsigned k = 2;
-    unsigned int c_size = n / workGroupSize * (1 << k);
-    unsigned c_tree_size = c_size * 2;
+    for (auto k : std::vector({1, 2, 4, 8})) {
+        std::cout << std::endl;
+        std::cout << "Using k = " << k << std::endl;
+        unsigned int c_size = n / workGroupSize * (1 << k);
+        unsigned c_tree_size = c_size * 2;
 
-    gpu::gpu_mem_32u c_init_gpu;
-    c_init_gpu.resizeN(c_size);
+        gpu::gpu_mem_32u c_init_gpu;
+        c_init_gpu.resizeN(c_size);
 
-    gpu::gpu_mem_32u c_tree_gpu;
-    c_tree_gpu.resizeN(c_tree_size);
+        gpu::gpu_mem_32u c_tree_gpu;
+        c_tree_gpu.resizeN(c_tree_size);
 
-    gpu::gpu_mem_32u o_gpu;
-    o_gpu.resizeN(c_size);
+        gpu::gpu_mem_32u o_gpu;
+        o_gpu.resizeN(c_size);
 
-    {
-        ocl::Kernel calc_c_init(radix_kernel, radix_kernel_length, "calc_c_init", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        calc_c_init.compile();
+        {
+            ocl::Kernel calc_c_init(radix_kernel, radix_kernel_length, "calc_c_init", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            calc_c_init.compile();
 
-        ocl::Kernel tranpose_init_c_kernel(radix_kernel, radix_kernel_length, "matrix_transpose", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        tranpose_init_c_kernel.compile();
+            ocl::Kernel tranpose_init_c_kernel(radix_kernel, radix_kernel_length, "matrix_transpose", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            tranpose_init_c_kernel.compile();
 
-        ocl::Kernel calc_c_tree_kernel(radix_kernel, radix_kernel_length, "calc_c_tree", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        calc_c_tree_kernel.compile();
+            ocl::Kernel calc_c_tree_kernel(radix_kernel, radix_kernel_length, "calc_c_tree", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            calc_c_tree_kernel.compile();
 
-        ocl::Kernel calc_o_kernel(radix_kernel, radix_kernel_length, "calc_o", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        calc_o_kernel.compile();
+            ocl::Kernel calc_o_kernel(radix_kernel, radix_kernel_length, "calc_o", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            calc_o_kernel.compile();
 
-        ocl::Kernel local_counting_kernel(radix_kernel, radix_kernel_length, "local_counting_sort", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        local_counting_kernel.compile();
+            ocl::Kernel local_counting_kernel(radix_kernel, radix_kernel_length, "local_counting_sort", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            local_counting_kernel.compile();
 
-        ocl::Kernel radix(radix_kernel, radix_kernel_length, "radix", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize));
-        radix.compile();
+            ocl::Kernel radix(radix_kernel, radix_kernel_length, "radix", "-D WORK_GROUP_SIZE=" + std::to_string(workGroupSize) + " -D k=" + to_string(k));
+            radix.compile();
 
-        timer t;
-        for (int iter = 0; iter < benchmarkingIters; ++iter) {
-            buffers[0].writeN(as.data(), n);
+            timer t;
+            for (int iter = 0; iter < benchmarkingIters; ++iter) {
+                buffers[0].writeN(as.data(), n);
 
-            t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфер данных
+                t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфер данных
 
-            for (int stage = 0; stage < 32 / k; ++stage) {
-                calc_c_init.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], c_init_gpu, n, stage);
-                unsigned group_size_x = device_info.warp_size;
-                unsigned group_size_y = workGroupSize / device_info.warp_size;
-                unsigned work_size_x = 1 << k;
-                unsigned work_size_y = c_size / (1 << k);
+                for (int stage = 0; stage < 32 / k; ++stage) {
+                    calc_c_init.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], c_init_gpu, n, stage);
+                    unsigned group_size_x = device_info.warp_size;
+                    unsigned group_size_y = workGroupSize / device_info.warp_size;
+                    unsigned work_size_x = 1 << k;
+                    unsigned work_size_y = c_size / (1 << k);
 
-                gpu::WorkSize tranpose_work_size(group_size_x, group_size_y, work_size_x, work_size_y);
-                tranpose_init_c_kernel.exec(tranpose_work_size, c_init_gpu, c_tree_gpu, (1 << k), c_size / (1 << k), workGroupSize);
+                    gpu::WorkSize tranpose_work_size(group_size_x, group_size_y, work_size_x, work_size_y);
+                    tranpose_init_c_kernel.exec(tranpose_work_size, c_init_gpu, c_tree_gpu, (1 << k), c_size / (1 << k), workGroupSize);
 
-                calc_c_tree(calc_c_tree_kernel, c_tree_gpu, c_size, workGroupSize);
-                calc_o_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), c_tree_gpu, o_gpu, c_size);
-                local_counting_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], n, stage);
-                radix.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], o_gpu, c_init_gpu, buffers[1], n, stage);
-                std::swap(buffers[0], buffers[1]);
+                    calc_c_tree(calc_c_tree_kernel, c_tree_gpu, c_size, workGroupSize);
+                    calc_o_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), c_tree_gpu, o_gpu, c_size);
+                    local_counting_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], n, stage);
+                    radix.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], o_gpu, c_init_gpu, buffers[1], n, stage);
+                    std::swap(buffers[0], buffers[1]);
+                }
+                t.nextLap();
             }
-            t.nextLap();
+            std::cout << std::string(2, ' ') << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
+            std::cout << std::string(2, ' ') << "GPU: " << (static_cast<double>(n) / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl << std::endl;
+
+            buffers[0].readN(as.data(), n);
         }
-        std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
-        std::cout << "GPU: " << (static_cast<double>(n) / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
 
-        buffers[0].readN(as.data(), n);
-    }
-
-    // Проверяем корректность результатов
-    for (int i = 0; i < n; ++i) {
-        EXPECT_THE_SAME(as[i], cpu_sorted[i], "GPU results should be equal to CPU results!");
+        // Проверяем корректность результатов
+        for (int i = 0; i < n; ++i) {
+            EXPECT_THE_SAME(as[i], cpu_sorted[i], "GPU results should be equal to CPU results!");
+        }
     }
     return 0;
 }
