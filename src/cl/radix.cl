@@ -22,9 +22,9 @@ __kernel void calc_c_tree(__global int* cs, unsigned read_offset, unsigned write
     cs[write_offset + get_global_id(0)] = cs[read_offset + 2 * get_global_id(0)] + cs[read_offset + 2 * get_global_id(0) + 1];
 }
 
-__kernel void matrix_transpose(__global float* data, __global float* output, unsigned w, unsigned h, unsigned work_group_size)
+__kernel void matrix_transpose(__global unsigned* data, __global unsigned* output, unsigned w, unsigned h, unsigned work_group_size)
 {
-    __local float mem[WARP_SIZE][WARP_SIZE];
+    __local unsigned mem[WARP_SIZE][WARP_SIZE];
 
     for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
         unsigned mem_y = get_local_id(1) + i * get_local_size(1);
@@ -121,8 +121,8 @@ __kernel void radix(__global const unsigned *as, __global const unsigned* o, __g
     for (unsigned i = 0; i != curr_val; ++i) {
         local_offset -= cs[get_group_id(0) * (1 << k) + i];
     }
-    if (value == 128) {
-        printf("%d ", get_global_id(0));
+    if (value == 1024) {
+        printf("A %d \n", get_global_id(0));
     }
     res[global_offset + local_offset] = value;
 }

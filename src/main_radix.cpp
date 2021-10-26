@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     buffers[0].resizeN(n);
     buffers[1].resizeN(n);
 
-    const unsigned int workGroupSize = 32;
+    const unsigned int workGroupSize = 128;
     const unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
     const unsigned k = 2;
     unsigned int c_size = n / workGroupSize * (1 << k);
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     //as = {128, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1, 1, 0, 1, 2, 5, 1, 0, 0, 3, 2, 4, 7, 1, 2, 1, 1};
     //as = {128, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 128};
     //as = {1024, 20120122, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-    //as = {1024, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    as = {1024, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
     gpu::gpu_mem_32u c_init_gpu;
     c_init_gpu.resizeN(c_size);
@@ -118,8 +118,12 @@ int main(int argc, char **argv) {
             for (int stage = 0; stage < 32 / k; ++stage) {
     std::cout << stage << std::endl << std::endl;
                 calc_c_init.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], c_init_gpu, n, stage);
-                tranpose_init_c_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), c_init_gpu, c_tree_gpu, (1 << k), c_size / (1 << k), workGroupSize);
+                tranpose_init_c_kernel.exec(gpu::WorkSize(32, global_work_size), c_init_gpu, c_tree_gpu, (1 << k), c_size / (1 << k), 32);
 
+    c_tree_gpu.readN(as.data(), c_tree_size);
+    std::cout << "CTREE ";
+    std::copy(as.begin(), as.begin() + c_tree_size, std::ostream_iterator<unsigned>(std::cout, " "));
+    std::cout << std::endl;
                 calc_c_tree(calc_c_tree_kernel, c_tree_gpu, c_size, workGroupSize);
                 calc_o_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), c_tree_gpu, o_gpu, c_size);
                 local_counting_kernel.exec(gpu::WorkSize(workGroupSize, global_work_size), buffers[0], n, stage);
@@ -137,6 +141,7 @@ int main(int argc, char **argv) {
     std::cout << std::endl;
 
     c_tree_gpu.readN(as.data(), c_tree_size);
+    std::cout << "CTREE ";
     std::copy(as.begin(), as.begin() + c_tree_size, std::ostream_iterator<unsigned>(std::cout, " "));
     std::cout << std::endl;
 
