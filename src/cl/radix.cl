@@ -83,7 +83,7 @@ __kernel void calc_o(__global unsigned* c_tree, __global unsigned* o, unsigned c
     o[id] = result - c_tree[id];
 }
 
-__kernel void local_counting_sort(__global unsigned *as, unsigned n, stage) {
+__kernel void local_counting_sort(__global unsigned *as, unsigned n, unsigned stage) {
     if (get_global_id(0) >= n) {
         return;
     }
