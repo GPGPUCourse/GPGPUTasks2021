@@ -28,7 +28,7 @@ __kernel void matrix_transpose(__global unsigned* data, __global unsigned* outpu
 
     for (int i = 0; i != WARP_SIZE * WARP_SIZE / work_group_size; ++i) {
         unsigned mem_y = get_local_id(1) + i * get_local_size(1);
-        unsigned mem_x = (get_local_id(0) + mem_y) % WARP_SIZE; //
+        unsigned mem_x = (get_local_id(0) + mem_y) % WARP_SIZE;
 
         unsigned in_x = get_global_id(0);
         unsigned in_y = get_group_id(1) * WARP_SIZE + i * get_local_size(1) + get_local_id(1);
@@ -56,6 +56,7 @@ __kernel void matrix_transpose(__global unsigned* data, __global unsigned* outpu
         unsigned output_index = out_x + out_y * h; 
         if (out_x < h && out_y < w) {
             output[output_index] = mem[mem_x][mem_y];
+        printf("%d: %d ", i, output_index); 
         }
     }
 }
