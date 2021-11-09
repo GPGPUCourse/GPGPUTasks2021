@@ -1,9 +1,11 @@
 unsigned calc_offset(unsigned my_index, __global const float* my_start, __global const float* reference_start, unsigned l, unsigned r, bool is_left) {
+    float value = my_start[my_index];
+
     while (l != r - 1) {
         unsigned middle = (r - l) / 2;
         if (is_left) {
-            if (reference_start[l + middle - 1] < my_start[my_index]) {
-                if (reference_start[l + middle] >= my_start[my_index]) {
+            if (reference_start[l + middle - 1] < value) {
+                if (reference_start[l + middle] >= value) {
                     return my_index + middle + l;
                 } else {
                     l = l + middle;
@@ -12,8 +14,8 @@ unsigned calc_offset(unsigned my_index, __global const float* my_start, __global
                 r = l + middle;
             }
         } else {
-            if (reference_start[l + middle - 1] <= my_start[my_index]) {
-                if (reference_start[l + middle] > my_start[my_index]) {
+            if (reference_start[l + middle - 1] <= value) {
+                if (reference_start[l + middle] > value) {
                     return my_index + middle + l;
                 } else {
                     l = l + middle;
@@ -24,12 +26,12 @@ unsigned calc_offset(unsigned my_index, __global const float* my_start, __global
         }
     }
     if (is_left) {
-        if (my_start[my_index] <= reference_start[l]) {
+        if (value <= reference_start[l]) {
             return my_index + l;
         }
         return my_index + r;
     } else {
-        if (my_start[my_index] < reference_start[l]) {
+        if (value < reference_start[l]) {
             return my_index + l;
         }
         return my_index + r;
