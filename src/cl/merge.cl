@@ -12,11 +12,6 @@ __kernel void merge(__global float* a, __global float* b, unsigned int n, unsign
     }
 
     unsigned int a_begin = ind / (i * 2) * (i * 2);
-
-    if (a_begin >= n){
-        return;
-    }
-
     unsigned int a_end = min(a_begin + i, n);
     unsigned int b_begin = a_end;
     unsigned int b_end = min(b_begin + i, n);
@@ -31,6 +26,6 @@ __kernel void merge(__global float* a, __global float* b, unsigned int n, unsign
             r = m;
         }
     }
-    
+
     b[ind + l - b_begin] = a[ind];
 }
