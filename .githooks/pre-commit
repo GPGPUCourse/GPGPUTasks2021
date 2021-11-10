@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import subprocess
+
+
+def last_line_valid(path):
+    """
+    Check last file line have linebreak
+    :param path: path to file
+    :return: have or haven't
+    """
+    with open(path, 'r') as f:
+        text = f.readlines()
+        try:
+            last_char = text[-1][-1]
+            return last_char == '\n'
+        except IndexError:
+            return False
+
+
+def fix_last_line(path):
+    """
+    Add a linebreak to the end of file if it doesn't have one
+    """
+    if last_line_valid(path):
+        return
+    with open(path, 'a') as f:
+        print(f'Add linebreak to the file: {path}')
+        f.write('\n')
+
+
+def fix_clang_format(path):
+    """
+    Fix clang-format
+    """
+    if path.endswith('.cpp') or path.endswith('.hpp') or path.endswith('.cl'):
+        print(f'clang-format fix: {path}')
+        subprocess.Popen(['clang-format', path, '-i'], stdout=subprocess.DEVNULL).communicate()
+
+
+def fix_format():
+    git_diff = subprocess.Popen('git diff-index --name-status --cached HEAD'.split(), stdout=subprocess.PIPE)
+    remove_deleted = subprocess.Popen('grep -v ^D'.split(), stdin=git_diff.stdout, stdout=subprocess.PIPE)
+    get_second_column = subprocess.Popen(['awk', '{ print $2 }'], stdin=remove_deleted.stdout, stdout=subprocess.PIPE)
+    git_diff.stdout.close()
+    remove_deleted.stdout.close()
+    output = get_second_column.communicate()[0].decode('utf-8').strip()
+    if not output:
+        return
+    for file in output.split('\n'):
+        path = f'./{file}'
+        fix_last_line(path)
+        fix_clang_format(path)
+    subprocess.Popen(['git', 'add'] + output.split('\n')).communicate()
+
+
+if __name__ == '__main__':
+    fix_format()
