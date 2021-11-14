@@ -50,9 +50,11 @@ int main(int argc, char **argv) {
         std::cout << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
         std::cout << "CPU: " << (n / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
     }
-    /*
+
     gpu::gpu_mem_32f as_gpu;
+    gpu::gpu_mem_32f bs_gpu;
     as_gpu.resizeN(n);
+    bs_gpu.resizeN(n);
     {
         ocl::Kernel merge(merge_kernel, merge_kernel_length, "merge");
         merge.compile();
@@ -61,8 +63,26 @@ int main(int argc, char **argv) {
             as_gpu.writeN(as.data(), n);
             t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфера данных
             unsigned int workGroupSize = 128;
-            unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-            merge.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n);
+            for (unsigned int block_size = 0; (1 << block_size) < n; block_size++) {
+              int block_num = 0;
+              for (; block_num < (n / (1 << (block_size + 1))); block_num++) {
+                unsigned int shift = block_num * (1 << (block_size + 1));
+                unsigned int workSize = ((1 << block_size) + workGroupSize - 1) / workGroupSize * workGroupSize;
+                merge.exec(gpu::WorkSize(workGroupSize, workSize), as_gpu, n, bs_gpu, shift, true);
+                merge.exec(gpu::WorkSize(workGroupSize, workSize), as_gpu, n, bs_gpu, shift, false);
+              }
+              unsigned int numElementsToCopy = block_num * (1 << (block_size + 1));
+              if (n % (1 << (block_size + 1)) >= (1 << block_size)) {
+                numElementsToCopy = n;
+                unsigned int shift = block_num * (1 << (block_size + 1));
+                unsigned int workSize = ((1 << block_size) + workGroupSize - 1) / workGroupSize * workGroupSize;
+                merge.exec(gpu::WorkSize(workGroupSize, workSize), as_gpu, n, bs_gpu, shift, true);
+                unsigned int initialWorkSize = (n % (1 << (block_size + 1)) - (1 >> block_size) + 1);
+                workSize = (initialWorkSize + workGroupSize - 1) / workGroupSize * workGroupSize;
+                merge.exec(gpu::WorkSize(workGroupSize, workSize), as_gpu, n, bs_gpu, shift, false);
+              }
+              bs_gpu.copyToN(as_gpu, numElementsToCopy);
+            }
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
@@ -73,6 +93,5 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n; ++i) {
         EXPECT_THE_SAME(as[i], cpu_sorted[i], "GPU results should be equal to CPU results!");
     }
-*/
     return 0;
 }
