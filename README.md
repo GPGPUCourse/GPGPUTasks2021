@@ -24,6 +24,8 @@
 Задание 3.0.
 =========
 
+i'm adding this text here to mark the fact that even though i'm about to hand all of these tasks incredibly late, i have, in fact, done the a+b task myself before i even laid eyes on this text or this code. this line will be removed later but hopefully the commit date will remain.
+
 Ознакомьтесь с реализацией A+B и какие используются вспомогательные библиотеки:
 
 1. ```src/main_aplusb.cpp``` - основная часть:
