@@ -50,13 +50,39 @@ int main(int argc, char **argv) {
         std::cout << "CPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
         std::cout << "CPU: " << (n / 1000 / 1000) / t.lapAvg() << " millions/s" << std::endl;
     }
-    /*
+
     gpu::gpu_mem_32u as_gpu;
+    gpu::gpu_mem_32u out;
+    gpu::gpu_mem_32u cs;
+    gpu::gpu_mem_32u buff;
+
+    constexpr uint workGroupSize = 128;
+    constexpr uint quan = 1 << 4;
+
+    const uint n_gpu = std::round((n - 1) / workGroupSize + 1) * workGroupSize;
+    uint cs_size = n_gpu / workGroupSize * quan;
+
     as_gpu.resizeN(n);
+    out.resizeN(n);
+    cs.resizeN(cs_size);
+    buff.resizeN(cs_size);
 
     {
-        ocl::Kernel radix(radix_kernel, radix_kernel_length, "radix");
-        radix.compile();
+        ocl::Kernel count(radix_kernel, radix_kernel_length, "count");
+        count.compile();
+
+        ocl::Kernel prefix_scan_up(radix_kernel, radix_kernel_length, "prefix_scan_up");
+        prefix_scan_up.compile();
+
+        ocl::Kernel prefix_scan_down(radix_kernel, radix_kernel_length, "prefix_scan_down");
+        prefix_scan_down.compile();
+
+        ocl::Kernel prefix_scan_end(radix_kernel, radix_kernel_length, "prefix_scan_end");
+        prefix_scan_end.compile();
+
+        ocl::Kernel reorder(radix_kernel, radix_kernel_length, "reorder");
+        reorder.compile();
+
 
         timer t;
         for (int iter = 0; iter < benchmarkingIters; ++iter) {
@@ -64,9 +90,24 @@ int main(int argc, char **argv) {
 
             t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфер данных
 
-            unsigned int workGroupSize = 128;
-            unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-            radix.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n);
+            for (uint i = 0; i < __CHAR_BIT__ * sizeof(int); i += sizeof(int)) {
+                count.exec(gpu::WorkSize(workGroupSize, n_gpu), as_gpu, cs, i, n_gpu / workGroupSize);
+
+                // prefix scan
+                for (int d = 0; d < log2(cs_size); ++d) {
+                    prefix_scan_up.exec(gpu::WorkSize(workGroupSize, n_gpu), cs, cs_size, d);
+                }
+                for (int d = log2(cs_size) - 1; d >= 0; --d) {
+                    prefix_scan_down.exec(gpu::WorkSize(workGroupSize, n_gpu), cs, cs_size, d);
+                }
+                prefix_scan_end.exec(gpu::WorkSize(workGroupSize, n_gpu), cs, buff, cs_size);
+
+                cs.swap(buff);
+
+                reorder.exec(gpu::WorkSize(workGroupSize, n_gpu), as_gpu, cs, out, i, n_gpu / workGroupSize);
+                std::swap(as_gpu, out);
+            }
+
             t.nextLap();
         }
         std::cout << "GPU: " << t.lapAvg() << "+-" << t.lapStd() << " s" << std::endl;
@@ -79,6 +120,6 @@ int main(int argc, char **argv) {
     for (int i = 0; i < n; ++i) {
         EXPECT_THE_SAME(as[i], cpu_sorted[i], "GPU results should be equal to CPU results!");
     }
-*/
+
     return 0;
 }
