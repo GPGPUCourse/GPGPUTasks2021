@@ -45,7 +45,8 @@ __kernel void merge(__global float *as, unsigned int size, __global float *out, 
     }
     const unsigned int pivot = from; // smallest index: as[pivot] >= current
     unsigned int next = pivot;       // smallest index: as[pivot] > current
-    for (; current == as[next] && next < r; ++next) {}
+    for (; next < r && current == as[next]; ++next) {
+    }
 
     // currently: as[i] < current on [l, pivot), as[i] == current on [pivot, next), as[i] > current on [next, r)
     unsigned int count = 0; // how many elements were already merged in our group

@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
             t.restart();// Запускаем секундомер после прогрузки данных, чтобы замерять время работы кернела, а не трансфера данных
             unsigned int workGroupSize = 128;
             unsigned int global_work_size = (n + workGroupSize - 1) / workGroupSize * workGroupSize;
-            for (unsigned int depth = 0, block_size = 1; block_size < n; ++depth, block_size *= 2) {
+            for (unsigned int block_size = 1; block_size < n; block_size *= 2) {
                 // merge_interval = 2 * block_size >= n on the last iteration
                 merge.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, n, out_gpu, block_size);
                 out_gpu.swap(as_gpu);
