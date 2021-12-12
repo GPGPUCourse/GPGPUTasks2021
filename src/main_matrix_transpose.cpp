@@ -20,8 +20,8 @@ int main(int argc, char **argv)
     context.activate();
 
     int benchmarkingIters = 10;
-    unsigned int M = 1024;
-    unsigned int K = 512;
+    unsigned int M = 512;
+    unsigned int K = 1024;
 
     std::vector<float> as(M*K, 0);
     std::vector<float> as_t(M*K, 0);
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
             // В CLion удобно смотреть какие есть вариант аргументов в конструкторах:
             // поставьте каретку редактирования кода внутри скобок конструктора WorkSize -> Ctrl+P -> заметьте что есть 2, 4 и 6 параметров
             // - для 1D, 2D и 3D рабочего пространства соответственно
-            matrix_transpose_kernel.exec(gpu::WorkSize(16, 16, K, M), as_gpu, as_t_gpu, K, M);
+            matrix_transpose_kernel.exec(gpu::WorkSize(16, 16, K, M), as_gpu, as_t_gpu, K, M, nullptr, 16);
 
             t.nextLap();
         }
