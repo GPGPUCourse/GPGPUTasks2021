@@ -8,12 +8,13 @@ __kernel void matrix_transpose(const __global float* input,
                                __global float* output,
                                unsigned int width,
                                unsigned int height,
-                               __local float* buffer,
                                unsigned int block_size) {
     unsigned int x = get_local_id(0);
     unsigned int y = get_local_id(1);
     unsigned int i = x + block_size * get_group_id(0);
     unsigned int j = y + block_size * get_group_id(1);
+
+    __local float buffer[256];
 
     if (i < width && j < height) {
         buffer[x + block_size * y] = input[i + width * j];
