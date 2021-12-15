@@ -83,8 +83,7 @@ int main(int argc, char **argv)
             for (int iter = 0; iter < benchmarkingIters; ++iter) {
                 kernel.exec(gpu::WorkSize(128, n),
                             input,
-                            results_vram,
-                            nullptr);
+                            results_vram);
                 std::vector<unsigned int> sum_gpu_vec(n / 128, 0);
                 unsigned int sum_gpu = 0;
                 results_vram.readN(sum_gpu_vec.data(), n / 128);

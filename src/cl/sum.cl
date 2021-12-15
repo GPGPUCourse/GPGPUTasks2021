@@ -5,9 +5,10 @@
 #line 6
 
 __kernel void sum(__global const unsigned int *input,
-                  __global unsigned int *partialSums,
-                  __local unsigned int *localSums) {
+                  __global unsigned int *partialSums) {
     unsigned int local_id = get_local_id(0);
+
+    __local unsigned int localSums[128];
 
     localSums[local_id] = input[get_global_id(0)];
 
