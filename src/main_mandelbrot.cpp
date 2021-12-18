@@ -132,7 +132,7 @@ int main(int argc, char **argv)
             kernel.exec(gpu::WorkSize(16, 16, width, height),
                         results_vram,
                         width, height,
-                    centralX - sizeX / 2.0f, centralY - sizeY / 2.0f,
+                        centralX - sizeX / 2.0f, centralY - sizeY / 2.0f,
                         sizeX, sizeY,
                         iterationsLimit, 0);
             t.nextLap();
@@ -282,7 +282,7 @@ vec3f cos(const vec3f &a) {
 void renderToColor(const float* results, unsigned char* img_rgb,
                    unsigned int width, unsigned int height)
 {
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int j = 0; j < height; ++j) {
         for (int i = 0; i < width; ++i) {
             // Палитра взята отсюда: http://iquilezles.org/www/articles/palettes/palettes.htm
